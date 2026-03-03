@@ -9,6 +9,13 @@
     "dev": "bun --watch run src/index.ts",
     "install": "bun run install.ts",
     "test": "bun test",
+    "test:all": "bun test tests/",
+    "test:infra": "bun test tests/infrastructure/",
+    "test:behavioural": "bun test tests/behavioural/",
+    "test:quality": "bun test tests/quality/",
+    "test:eval": "bun test tests/evaluation/",
+    "test:benchmark": "bun test tests/evaluation/benchmark-suite.ts",
+    "test:existing": "bun test src/test-*.ts",
     "lint": "biome check .",
     "format": "biome format --write ."
   },
