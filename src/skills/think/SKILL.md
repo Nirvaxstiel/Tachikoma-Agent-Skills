@@ -22,13 +22,9 @@ triggers:
   - make it simple
 ---
 
-# Functional Thinking Principles
+# Think Skill
 
-When designing or reasoning about code, apply these principles.
-
-## Core Philosophy
-
-Clear thinking produces clear systems. Prefer:
+Functional thinking for code design. Apply these principles.
 - **Predictable** — Same inputs → Same outputs
 - **Reasonable** — Understandable without hidden state
 - **Maintainable** — Changes are localized
@@ -57,15 +53,7 @@ Clear thinking produces clear systems. Prefer:
 
 ## Decision Questions
 
-When designing, ask:
-
-> "Is this **predictable** (same input → same output)?"
-
-> "Can this be understood without **tracking hidden state**?"
-
-> "Are **changes localized** or do they cascade?"
-
-> "Does the interface **tell the truth** about what it does?"
+Predictable? Same input → same output? Hidden state? Changes localized? Interface truthful?
 
 ## Common Refactors
 
@@ -79,11 +67,6 @@ When designing, ask:
 | Big class | Small composed functions | #3 Composition |
 | Public by default | Private by default | #16 Surface |
 
-## When to Apply
+## When
 
-- Designing new systems
-- Refactoring existing code
-- Making architectural decisions
-- Code reviews
-
-**Don't be dogmatic** — Apply where they bring clarity, adapt to context.
+New systems, refactoring, architecture decisions, code reviews. Don't be dogmatic — apply where clarity improves.

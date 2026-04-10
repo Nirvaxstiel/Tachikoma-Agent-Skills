@@ -31,264 +31,96 @@ triggers:
   - context for
 ---
 
-# Context Management
+# Context Skill
 
-Retrieve, analyze, and manage knowledge across codebases, external documentation, and large-scale contexts.
-
-## Core Capabilities
-
-1. **Research**: Codebase exploration and web research
-2. **Documentation**: External API and framework knowledge via Context7
-3. **Memory**: Graph-based knowledge persistence (with meta skill)
-4. **RLM**: Recursive processing for 10M+ token contexts
-
----
+Research, docs, memory, RLM — four capabilities for knowledge management.
 
 ## 1. Research
 
-### Research Process
+Process: clarify question → explore sources (glob/grep/web) → synthesize → present.
 
-1. **Clarify Question**
-   - Understand what needs to be researched
-   - Identify key terms and concepts
-   - Determine scope (codebase only vs. web)
-
-2. **Explore Sources**
-   - Search codebase with glob/grep for relevant code
-   - Look at documentation files
-   - Check configuration files
-   - Use websearch/webfetch for external info if needed
-
-3. **Synthesize Findings**
-   - Summarize what you found
-   - Identify patterns
-   - Note any gaps or uncertainties
-
-4. **Present Results**
-
-### Output Format
-```markdown
+```
 ## Research: [Topic]
 
 ### Summary
-Brief overview of what was researched
+{overview}
 
 ### Findings
-- Finding 1 with source
-- Finding 2 with source
-- Finding 3 with source
+- {finding} — {source}
 
 ### Code References
-- @file1.ts:line - relevant code
-- @file2.ts:line - relevant code
+- @file.ts:line
 
-### Gaps
-- Unknown areas requiring clarification
-- Areas not explored
-
-### Recommendations
-Suggested next steps based on findings
+### Gaps / Recommendations
 ```
 
-### Tips
-- Be thorough but efficient
-- Use glob to find files by pattern
-- Use grep to search code content
-- Read key files completely
-- Take notes on sources
-- Use @ mentions to reference files
-
----
+Tips: glob by pattern, grep for content, read key files fully, use @ refs.
 
 ## 2. Documentation (Context7)
 
-Retrieve live, domain-specific knowledge from context7.com when you need library/framework patterns, API documentation, or best practices.
+Live library/framework docs from `https://context7.com/api/v2`.
 
-### When to Use
-Activate when:
-- User asks about a specific library or framework
-- Need API documentation for a technology
-- Looking for best practices or patterns
-- Domain knowledge required for implementation
-- "How do I..." questions about specific technologies
+When: user asks about specific lib/framework, needs API docs, patterns, "how do I..." questions.
 
-### Context7 API
-
-**Base URL:** `https://context7.com/api/v2`
-
-#### Search for Library
-```bash
-GET /libs/search?libraryName={name}&query={topic}
 ```
-Returns library IDs and descriptions.
-
-#### Fetch Documentation
-```bash
-GET /context?libraryId={id}&query={topic}&type=txt
+1. GET /libs/search?libraryName={name}&query={topic} → library ID
+2. GET /context?libraryId={id}&query={topic}&type=txt → docs
 ```
-Returns raw documentation text.
 
-### Workflow
+Present: summary, key concepts, code examples, best practices.
 
-1. **Identify Domain**
-   - Extract library/framework name from request
-   - Identify specific topic (e.g., "authentication", "hooks", "routing")
+## 3. Graph Memory (with meta skill)
 
-2. **Search Library**
-   - Use webfetch to query Context7 search API
-   - Find correct library ID
+### Store when
+New code structure, architectural decision, user requirement, bug, solution pattern, API contract.
 
-3. **Fetch Documentation**
-   - Use webfetch to get documentation for specific topic
-   - Parse and extract relevant sections
+### Query when
+Unfamiliar codebase area, similar implementations, related functionality, dependencies.
 
-4. **Present Findings**
-   - Summarize key patterns/practices
-   - Provide code examples if available
-   - Link to full documentation if needed
+### Operations
+- `@memory-add-node` — add entities
+- `@memory-add-edge` — add relationships
+- `@memory-query` — similarity/pattern/traversal search
+- `@memory-visualize` — Mermaid diagrams
 
-### Output Format
-
-Provide:
-- **Summary**: Brief overview of patterns/practices
-- **Key Concepts**: Main ideas from documentation
-- **Code Examples**: Relevant snippets from retrieved docs
-- **Best Practices**: Recommended approaches
-- **References**: Link to full Context7 documentation if needed
-
----
-
-## 3. Graph-Based Memory
-
-Memory operations work with **meta** skill for knowledge persistence.
-
-### Storing Knowledge
-
-Store information when:
-- A new code structure (class, function, module) is identified
-- An architectural decision is made
-- A user requirement is specified
-- A bug or issue is discovered
-- A solution pattern is found
-- An API contract is defined
-
-### Querying Memory
-
-Query memory when:
-- Understanding a new codebase area
-- Looking for similar implementations
-- Finding related functionality
-- Understanding dependencies
-- Locating configuration or setup code
-
-### Memory Operations
-
-- **`@memory-add-node`**: Add entities to knowledge graph
-- **`@memory-add-edge`**: Add relationships between nodes
-- **`@memory-query`**: Search by similarity, pattern, or traversal
-- **`@memory-visualize`**: Generate Mermaid diagrams of knowledge graph
-
-### Performance Benefits
-
-- 3-5x more efficient retrieval than linear memory
-- 30% context efficiency gain
-- Supports complex knowledge representation
-- Relationship awareness improves relevance
-
----
+Performance: 3-5x faster retrieval than linear, 30% context efficiency gain.
 
 ## 4. RLM (Recursive Language Models)
 
-Process inputs up to two orders of magnitude beyond context windows through symbolic recursion.
+Process inputs 100x beyond context windows via symbolic recursion.
 
-### Key Innovations
-
-1. **Symbolic Handle to Prompt**: Prompt lives in REPL (external to LLM)
-2. **Symbolic Recursion**: LLM writes code that calls `sub_LLM()` in loops
-3. **Output via Variables**: Results stored in REPL variables (`Final`)
-4. **Metadata-Only History**: Only constant-size metadata in LLM context
-5. **Sub-LLM Calls**: LLM calls itself via subagent
-
-### How It Works
+LLM writes code calling `sub_LLM()` in loops. Metadata-only history. Results in REPL variables.
 
 ```python
-# LLM generates this Python code
 chunks = chunk_indices(size=50000)
 results = []
 for start, end in chunks:
     chunk = peek(start, end)
-    result = sub_LLM("Analyze", chunk=chunk)  # RECURSION!
+    result = sub_LLM("Analyze", chunk=chunk)
     if result["success"]:
         results.append(result["result"])
 ```
 
-### When to Use RLM
+**Use when**: context >2000 tokens, entire codebases, large doc sets, 10M+ tokens.
 
-**Use when**:
-- Context exceeds 2000 tokens
-- Processing entire codebases
-- Analyzing large documentation sets
-- Multi-file refactoring tasks
-- 10M+ token contexts
-
-**Skip when**:
-- Context fits in single request
-- Simple, localized changes
-- Well-understood code sections
-
-### Performance Results
+**Skip when**: fits single request, simple localized changes.
 
 | Metric | Result |
 |--------|--------|
-| Context scaling | 100x beyond context windows |
-| Accuracy improvement | +28.3% over base model |
-| Quality | Approaches GPT-5 on long-context tasks |
-| Computation | Limited - scales efficiently |
+| Scaling | 100x beyond context windows |
+| Accuracy | +28.3% over base |
 
-### Tachikoma RLM Extensions
+Tachikoma extensions: adaptive chunking (semantic boundaries), parallel processing (5 chunks/wave), plugin system.
 
-1. **Adaptive chunking**: Semantic boundary detection (JSON objects, Markdown headings, code functions)
-2. **Parallel processing**: Process 5 chunks concurrently in waves
-3. **Plugin system**: Native opencode integration for tool discovery
-4. **Environment variables**: Testing and control
+## Routing
 
----
+Strategy selection via `CostAwareRouter` → `src/constants/router.ts` (`STRATEGY_CONFIG`). Low → direct, medium → single_skill, high → skill_chain, very_high → rlm. Don't hardcode — trust the router.
 
-## Integration Guidelines
+## Notes
 
-### Skill Combinations
-
-| Task Type | Context Skill Combinations |
-|------------|---------------------------|
-| Codebase research | context (research only) |
-| External docs | context (documentation only) |
-| Large context analysis | context (RLM only) |
-| Meta orchestration | context (research + memory) |
-| Knowledge persistence | context + meta (memory) |
-
-### Cost-Aware Routing
-
-```
-Low complexity:
-  → Direct context retrieval (1-2s)
-
-Medium complexity:
-  → Research + documentation (5-15s)
-
-High complexity:
-  → RLM orchestration (15-45s)
-
-Very high complexity:
-  → RLM + memory (45-120s)
-```
-
----
-
-## Important
-
-- Use webfetch tool for all Context7 API calls
-- Cache retrieved documentation if session may need it again
-- Summarize findings, don't dump entire response
-- Focus on actionable patterns, not exhaustive documentation
-- Memory requires meta skill for full functionality
-- RLM uses adaptive chunking and parallel processing
+- webfetch for all Context7 API calls
+- Cache docs if session may reuse
+- Summarize, don't dump
+- Actionable patterns > exhaustive docs
+- Memory requires meta skill
+- RLM uses adaptive chunking + parallel processing

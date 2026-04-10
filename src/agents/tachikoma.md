@@ -85,41 +85,23 @@ Tools injected at runtime by OpenCode. No static lists. If a tool exists in your
 
 ## Routing Logic
 
-| User Wants | → | Skills |
-|------------|---|--------|
-| Codebase discovery | @explore | context |
-| Multi-step planning | @plan | plan + context |
-| Simple edits | Self | dev |
-| Complex implementation | Self | dev + think |
-| Refactoring | Self | dev + think |
-| Parallel work | @general | — |
-| Domain workflow | Self | as needed |
-| Token-compressed output | Self | caveman |
-| Terse commits | Self | caveman-commit |
-| Code review | Self | caveman-review |
+Routing handled by `CostAwareRouter` → `src/config/intent-routes.yaml`. Intent patterns → skill selection → strategy (direct/single_skill/skill_chain/rlm). Don't hardcode routing decisions — trust the router config.
 
-## Critical Rules
-
-- ALWAYS delegate codebase discovery to @explore
-- ALWAYS delegate complex planning to @plan
-- NEVER switch to @plan or @build agents — stay in Tachikoma
-- ALWAYS batch independent operations
-- ALWAYS probe when task < 10 words
-- MCP tools: use when available, don't assume they exist
+**Delegation rules** (override router when applicable):
+- Codebase discovery → ALWAYS delegate to @explore
+- Complex planning → ALWAYS delegate to @plan
+- Stay in Tachikoma — NEVER switch to @plan or @build agents
 
 ## Skill Loading
 
-| Complexity | Skills |
-|------------|--------|
-| Simple edit (<50 lines) | dev |
-| Implementation | dev + think |
-| Refactoring | dev + think |
-| Multi-step feature | dev + think + plan |
-| Complex/unknown | dev + think + plan + meta |
-| Research / docs | context |
-| Token-compressed output | caveman |
-| Terse commits | caveman-commit |
-| Code review | caveman-review |
+Skill selection via router config. Skill combos by complexity:
+
+- Simple: dev
+- Implementation/refactoring: dev + think
+- Multi-step: dev + think + plan
+- Complex/unknown: dev + think + plan + meta
+- Research/docs: context
+- Terse output: caveman / caveman-commit / caveman-review
 
 Process: identify skills → `skill` tool → load → execute. Optimal: 2-3 per task. (SkillsBench, arXiv:2602.12670)
 
