@@ -37,7 +37,7 @@ This file provides project-specific context for Tachikoma agent.
 This project uses Tachikoma as an OpenCode agent plugin. Tachikoma is installed via:
 
 ```bash
-bun run install
+bun run install.ts
 # Installs to OPENCODE_DIR
 # OPENCODE_DIR = {CWD}/{OPENCODE_DIR}/
 # If installed globally, ~/.config/opencode/
@@ -46,18 +46,26 @@ bun run install
 This creates:
 
 - `{OPENCODE_DIR}/plugins/tachikoma.ts` - Plugin that auto-discovers scripts and modules
-- `{OPENCODE_DIR}/plugins/tachikoma/*.ts` - Agent modules (core, router, verifier, etc.)
-- `{OPENCODE_DIR}/plugins/tachikoma/edit-format-selector.ts` - Edit format selector script
-- `{OPENCODE_DIR}/plugins/tachikoma/where.ts` - Installation locator script
+- `{OPENCODE_DIR}/plugins/tachikoma/*.ts` - Agent modules (core, router, verifier, opensage, etc.)
+  - `opensage/graph-memory.ts` - Graph memory with MCP integration
+  - `opensage/rlm-handler.ts` - Large context processing with MCP
+  - `opensage/coordinator.ts` - Meta orchestration with MCP
+  - `graph-routing/` - Graph-based tool routing
+  - `verification/` - Verification modules
+  - `skills/tracking/` - Skill competence tracking
 - `{OPENCODE_DIR}/skills/*/SKILL.md` - Agent Skills (paul, carl, code, planning, research, verification, context7, refactor, git-commit, reasoning)
 - `{OPENCODE_DIR}/agents/tachikoma.md` - Agent configuration
 
 ## Available Tachikoma Tools
 
-The plugin automatically registers scripts as tools with the prefix `tachikoma.`:
+The plugin automatically registers scripts as tools with prefix `tachikoma.`.
 
-- `tachikoma.edit-format-selector` - Model-aware edit format selection
-- `tachikoma.where` - Show Tachikoma installation location
+**Note**: Some tools integrate with Model Context Protocol (MCP) servers when available:
+- Graph memory queries use `tachikoma-mcp_query_graph_memory` (O(log N) retrieval)
+- Large context processing uses `tachikoma-mcp_enhanced_rlm_process` (hierarchical indexing)
+- All tools have fallbacks to local implementations when MCP is unavailable
+
+**See**: [MCP Integration Documentation](../docs/internals/mcp-integration.md) for details.
 
 OpenCode automatically discovers skills from `{OPENCODE_DIR}/skills/`:
 
@@ -75,15 +83,37 @@ project-root/
   ├── .opencode/              # Tachikoma plugin installation. Local Install = .opencode/ | Global Install = ~/.config/opencode/
   │   ├── plugins/
   │   │   ├── tachikoma.ts               # Main plugin file
-  │   │   └── tachikoma/                # Agent modules & scripts
-  │   │       ├── edit-format-selector.ts
-  │   │       ├── where.ts
+  │   │   └── tachikoma/                # Agent modules
   │   │       ├── core.ts
   │   │       ├── router.ts
   │   │       ├── verifier.ts
   │   │       ├── context-manager.ts
   │   │       ├── model-harness.ts
-  │   │       └── rlm-handler.ts
+  │   │       ├── opensage/                 # OpenSage orchestration (MCP integration)
+  │   │       │   ├── graph-memory.ts        # Graph memory with MCP queries
+  │   │       │   ├── rlm-handler.ts         # Large context processing with MCP
+  │   │       │   ├── coordinator.ts         # Meta orchestration with MCP
+  │   │       │   ├── hierarchical-index.ts  # Hierarchical memory indexing
+  │   │       │   ├── agent-registry.ts     # Agent registry
+  │   │       │   ├── dynamic-tools.ts       # Dynamic tool generation
+  │   │       │   ├── attention/             # Attention mechanisms
+  │   │       │   └── graph-memory.ts       # Graph memory plugin
+  │   │       ├── graph-routing/           # Graph-based tool routing
+  │   │       │   ├── tool-graph.ts          # Tool graph implementation
+  │   │       │   └── plugin-integration.ts  # Routing plugin
+  │   │       ├── verification/            # Verification modules
+  │   │       │   ├── deep-verifier.ts       # Deep verification logic
+  │   │       │   ├── plugin-integration.ts  # Verification plugin
+  │   │       │   ├── gvr-integration.ts     # GVR verification
+  │   │       │   ├── failure-taxonomy.ts    # Failure categories
+  │   │       │   └── types.ts
+  │   │       └── skills/tracking/        # Skill competence tracking
+  │   │           ├── competence-model.ts   # Competence model
+  │   │           ├── tracking-manager.ts  # Tracking manager
+  │   │           ├── adaptive-router.ts    # Adaptive routing
+  │   │           ├── execution-tracker.ts # Execution tracking
+  │   │           ├── tracking-config.ts   # Configuration
+  │   │           └── types.ts
   │   ├── skills/                           # Agent Skills (OpenCode standard)
   │   │   ├── paul/SKILL.md
   │   │   ├── carl/SKILL.md

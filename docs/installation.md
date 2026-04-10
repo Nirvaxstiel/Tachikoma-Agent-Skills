@@ -5,12 +5,6 @@
 Install Tachikoma agent as an OpenCode plugin:
 
 ```bash
-bun run install
-```
-
-Or run the install script directly:
-
-```bash
 bun run install.ts
 ```
 
@@ -146,6 +140,71 @@ The installer automatically backs up existing `.opencode` directories before ins
 ```
 
 Keep the backup until you're satisfied with the installation, then delete it manually.
+
+## MCP Server Setup (Optional)
+
+Tachikoma can integrate with Model Context Protocol (MCP) servers for enhanced capabilities. MCP setup is optional - the agent works without it with local fallbacks.
+
+### Required MCP Servers
+
+#### 1. Tachikoma-MCP
+Provides meta-orchestration capabilities (topology analysis, verification loops, graph memory).
+
+**Installation:**
+```bash
+git clone https://github.com/Nirvaxstiel/Tachikoma-MCP
+cd Tachikoma-MCP
+bun install
+```
+
+**Configuration in OpenCode:**
+Add to your OpenCode MCP configuration (typically `~/.config/opencode/mcp.json` or similar):
+
+```json
+{
+  "mcpServers": {
+    "tachikoma": {
+      "command": "bun",
+      "args": ["run", "path/to/Tachikoma-MCP/src/index.ts"]
+    }
+  }
+}
+```
+
+#### 2. jcodemunch-mcp
+Provides codebase indexing and navigation (file trees, symbol search, references).
+
+**Installation:**
+```bash
+git clone https://github.com/jgravelle/jcodemunch-mcp/
+cd jcodemunch-mcp
+bun install
+```
+
+**Configuration in OpenCode:**
+```json
+{
+  "mcpServers": {
+    "jcodemunch": {
+      "command": "bun",
+      "args": ["run", "path/to/jcodemunch-mcp/src/index.ts"]
+    }
+  }
+}
+```
+
+### Verifying MCP Setup
+
+After configuring MCP servers, restart OpenCode. The agent will automatically use available MCP tools with local fallbacks if unavailable.
+
+Check [MCP Integration](internals/mcp-integration.md) for detailed information about which tools are used and how fallbacks work.
+
+### Without MCP Servers
+
+Tachikoma works fully without MCP servers:
+- All MCP calls fall back to local implementations
+- No functionality is lost
+- Performance may be slower for some operations (linear vs O(log N) queries)
 
 ## After Installation
 

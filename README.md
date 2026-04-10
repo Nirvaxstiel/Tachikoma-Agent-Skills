@@ -13,11 +13,12 @@ A general purpose AI agent named after the curious AI tanks from _Ghost in the S
 - **Verification Loops**: Generator-Verifier-Reviser pattern for complex tasks
 - **Position-Aware Context**: Mitigates U-shaped attention bias in LLMs
 - **Model-Aware Editing**: Dynamic edit format selection based on model
+- **MCP Integration**: Leverages external Model Context Protocol servers for enhanced capabilities
 
 ## Installation
 
 ```bash
-bun run install
+bun run install.ts
 ```
 
 > Interactive installer with three options:
@@ -42,14 +43,17 @@ Ghost in the Shell inspired themes for OpenCode terminal:
 
 ### Using Tachikoma Tools
 
-> Tachikoma exposes scripts as OpenCode tools - check the `plugins` folder for more.
+> Tachikoma exposes scripts as OpenCode tools and integrates with MCP servers. See [MCP Integration](docs/internals/mcp-integration.md) for details on external tools.
 
 ```bash
 @tachikoma Check edit format for current model
-# → Agent uses tachikoma.edit-format-selector tool
+# → Uses tachikoma.edit-format-selector (MCP or local)
 
-@tachikoma Where is Tachikoma installed?
-# → Agent uses tachikoma.where tool
+@tachikoma Query graph memory
+# → Uses tachikoma-mcp_query_graph_memory (MCP with local fallback)
+
+@tachikoma Process large context
+# → Uses tachikoma-mcp_enhanced_rlm_process (MCP with local fallback)
 ```
 
 ## Core Concepts
@@ -101,7 +105,7 @@ const args = Bun.argv.slice(2);
 console.log(`Processing: ${args[0] || "no args"}`);
 ```
 
-2. Reinstall: `bun run install`
+2. Reinstall: `bun run install.ts`
 
 3. Script automatically becomes `tachikoma.my-new-capability` tool!
 
@@ -115,7 +119,7 @@ console.log(`Processing: ${args[0] || "no args"}`);
 
 ### Full Documentation
 
-- [VitePress Site](https://nirvaxstiel.github.io/Tachikoma-Proompt-Cookbooks/)
+- [VitePress Site](https://nirvaxstiel.github.io/Tachikoma-Agent-Skills/)
 - [docs/](docs/) - Raw markdown source
 
 ## License

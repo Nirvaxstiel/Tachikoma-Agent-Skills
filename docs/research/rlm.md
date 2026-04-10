@@ -130,8 +130,46 @@ Tachikoma's RLM implementation extends the MIT paper with:
 2. **Parallel processing** - Process 5 chunks concurrently in waves
 3. **Plugin system** - Native opencode integration for tool discovery
 4. **Environment variables** - Testing and control
+5. **MCP integration** - Uses `tachikoma-mcp_enhanced_rlm_process` with local fallback
+
+### MCP-Enhanced Processing
+
+When `tachikoma-mcp_enhanced_rlm_process` is available:
+
+```typescript
+// MCP handles processing with hierarchical indexing
+const mcpResult = await globalThis.mcpTools.enhancedRLMProcess({
+  content: largeContext,
+  query: userRequest,
+  use_hierarchical_indexing: true,
+  chunk_strategy: "semantic",
+});
+
+// Fallback to local processing if MCP unavailable
+```
+
+**Performance:**
+- With MCP: O(log N) retrieval, semantic chunking
+- Without MCP: Fixed-size chunking, linear scan
+- Improvement: Better semantic coherence, faster queries
+
+### Configuration
+
+RLM handler configuration in `src/plugin/tachikoma/rlm-handler.ts`:
+
+```typescript
+interface RLMConfig {
+  chunkSize: number;              // Target tokens per chunk (50K)
+  maxConcurrentChunks: number;   // Parallel waves (5)
+  semanticBoundaries: string[];   // What defines chunk boundaries
+  enableAdaptiveChunking: boolean;
+  enableParallelProcessing: boolean;
+  recursionDepth: number;
+}
+```
 
 **See**: `docs/capabilities/rlm.md` for Tachikoma implementation details
+**See**: `docs/internals/mcp-integration.md` for MCP server integration
 
 ---
 

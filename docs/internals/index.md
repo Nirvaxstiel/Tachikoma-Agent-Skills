@@ -97,3 +97,4 @@ User Input → Intent Classification → Agent Selection → Tool Execution → 
 - [Agents System](/internals/opencode-agents) - Agent definitions and permissions
 - [Configuration](/internals/opencode-config) - Config loading and precedence
 - [Agent Skills Format](/internals/agent-skills-format) - Open standard specification
+- [MCP Integration](/internals/mcp-integration) - External MCP server integration

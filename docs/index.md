@@ -30,6 +30,8 @@ features:
     details: Workers for large-context discovery and parallel task execution.
   - title: Cost-Aware Routing
     details: Match task complexity to execution strategy for optimal speed vs accuracy.
+  - title: MCP Integration
+    details: Leverages Model Context Protocol servers for enhanced capabilities with local fallbacks.
 ---
 
 # Installation Paths

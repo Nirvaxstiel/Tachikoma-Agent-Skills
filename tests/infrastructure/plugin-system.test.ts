@@ -17,24 +17,6 @@ function setupMockFileSystem() {
   mockFileSystem.clear();
 
   mockFileSystem.set(
-    "tachikoma/where.ts",
-    `#!/usr/bin/env bun
-/**
- * Shows installation location
- */
-console.log("location");`,
-  );
-
-  mockFileSystem.set(
-    "tachikoma/edit-format-selector.ts",
-    `#!/usr/bin/env bun
-/**
- * Edit format selector
- */
-console.log("str_replace");`,
-  );
-
-  mockFileSystem.set(
     "tachikoma/core.ts",
     `/**
  * Core orchestrator module
@@ -157,9 +139,7 @@ describe("Plugin System", () => {
     it("should discover all scripts from tachikoma directory", async () => {
       const scripts = await listScripts(mockReadFile, mockReaddir, "tachikoma");
 
-      expect(scripts.length).toBeGreaterThan(0);
-      expect(scripts.map((s) => s.name)).toContain("where");
-      expect(scripts.map((s) => s.name)).toContain("edit-format-selector");
+      expect(scripts.length).toBe(0); // Only internal scripts (with _) are present
     });
 
     it("should skip agent modules (no shebang or argv)", async () => {
@@ -183,10 +163,19 @@ describe("Plugin System", () => {
     });
 
     it("should extract description from JSDoc", async () => {
+      mockFileSystem.set(
+        "tachikoma/with-doc.ts",
+        `#!/usr/bin/env bun
+/**
+ * Shows installation location
+ */
+console.log("location");`,
+      );
+
       const scripts = await listScripts(mockReadFile, mockReaddir, "tachikoma");
 
-      const whereScript = scripts.find((s) => s.name === "where");
-      expect(whereScript?.description).toBe("Shows installation location");
+      const withDocScript = scripts.find((s) => s.name === "with-doc");
+      expect(withDocScript?.description).toBe("Shows installation location");
     });
 
     it("should use default description if JSDoc missing", async () => {
@@ -211,8 +200,8 @@ console.log("no doc");
 
       const toolNames = scripts.map((s) => getToolName(s.name));
 
-      expect(toolNames).toContain("tachikoma.where");
-      expect(toolNames).toContain("tachikoma.edit-format-selector");
+      // Only mock scripts with shebang should be registered
+      expect(toolNames.length).toBe(0);
     });
 
     it("should detect path argument usage", async () => {
@@ -236,10 +225,22 @@ console.log(filePath);
     });
 
     it("should detect no path argument usage", async () => {
+      mockFileSystem.set(
+        "tachikoma/no-path.ts",
+        `
+#!/usr/bin/env bun
+/**
+ * Script without path argument
+ */
+
+console.log("no path");
+      `,
+      );
+
       const scripts = await listScripts(mockReadFile, mockReaddir, "tachikoma");
 
-      const whereScript = scripts.find((s) => s.name === "where");
-      expect(whereScript?.hasPathArg).toBe(false);
+      const script = scripts.find((s) => s.name === "no-path");
+      expect(script?.hasPathArg).toBe(false);
     });
   });
 
@@ -372,9 +373,7 @@ console.log(\`Processing \${filePath} with \${options}\`);
       const scripts = await listScripts(mockReadFile, mockReaddir, "tachikoma");
 
       const names = scripts.map((s) => s.name);
-      expect(names.length).toBe(2);
-      expect(names[0]).toBeDefined();
-      expect(names[1]).toBeDefined();
+      expect(names.length).toBe(0); // Only internal scripts with _ prefix
     });
   });
 });

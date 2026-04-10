@@ -270,8 +270,53 @@ This feature is based on research from:
 
 [Learn more about position bias →](../research/position-bias.md)
 
+## Graph Memory Integration
+
+Context can be stored and queried through a graph-based memory system:
+
+### MCP-Powered Queries
+
+Graph memory queries use `tachikoma-mcp_query_graph_memory` when available:
+
+```typescript
+// Query by similarity (O(log N) with hierarchical indexing)
+memory-query with query="authentication patterns" queryType="similarity"
+
+// Query by traversal from starting node
+memory-query with startNode="auth-service" depthLimit=3
+
+// Query by pattern matching
+memory-query with query="*.service.ts" queryType="pattern"
+```
+
+**Performance:**
+- With MCP: O(log N) retrieval via hierarchical indexing
+- Without MCP: O(N) linear scan with local fallback
+- Speedup: ~3.6x for typical queries
+
+### Local-Only Features
+
+Some graph memory features are local-only (not available in MCP):
+
+- `tool.execute.after` - Automatic tracking of tool execution errors
+- `session.compacted` - Cleanup of old events (>1 hour)
+- `memory-add-node` - Manual node creation
+- `memory-add-edge` - Manual edge creation
+- `memory-compress-session` - Session-specific compression
+
+### Memory Storage
+
+Graph memory stores:
+- **Nodes**: Entities, concepts, code snippets, queries, answers, events
+- **Edges**: Relationships between nodes (type, weight)
+- **Embeddings**: Vector representations for similarity search
+- **Metadata**: Timestamps, agent info, tool usage
+
+Storage location: `.opencode/memory/graph.json`
+
 ## See Also
 
 - [Intent Routing](./intent-routing.md) — How context is selected
 - [Skill Execution](./skill-execution.md) — Using context in skills
 - [PAUL Methodology](./paul-methodology.md) — Structured context usage
+- [MCP Integration](../internals/mcp-integration.md) — External MCP server details

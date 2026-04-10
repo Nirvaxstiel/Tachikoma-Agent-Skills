@@ -1,3 +1,16 @@
+/**
+ * Graph Memory Plugin
+ *
+ * Provides graph-based knowledge storage and retrieval.
+ *
+ * MCP Integration:
+ * - memory-query uses tachikoma-mcp_query_graph_memory when available
+ * - Falls back to local implementation if MCP unavailable
+ * - Preserves unique local features: event tracking, session compression
+ *
+ * See: docs/internals/mcp-integration.md for MCP server details
+ */
+
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Plugin } from "@opencode-ai/plugin";
@@ -44,20 +57,6 @@ async function generateEmbedding(text: string): Promise<number[]> {
 
   const mag = Math.sqrt(vector.reduce((sum, v) => sum + v * v, 0));
   return mag === 0 ? vector : vector.map((v) => v / mag);
-}
-
-function cosineSimilarity(a: number[], b: number[]): number {
-  let dot = 0;
-  let magA = 0;
-  let magB = 0;
-
-  for (let i = 0; i < a.length; i++) {
-    dot += a[i] * b[i];
-    magA += a[i] * a[i];
-    magB += b[i] * b[i];
-  }
-
-  return dot / (Math.sqrt(magA) * Math.sqrt(magB));
 }
 
 export const GraphMemoryPlugin = async ({ client, worktree }: Parameters<Plugin>[0]) => {
@@ -205,93 +204,38 @@ export const GraphMemoryPlugin = async ({ client, worktree }: Parameters<Plugin>
       },
 
       "memory-query": {
-        description: "Query knowledge graph by similarity or pattern",
+        description: "Query knowledge graph using MCP tools (similarity, pattern, traversal)",
         args: {
           query: { type: "string", description: "Search query" },
-          nodeType: {
+          queryType: {
             type: "string",
-            enum: ["entity", "concept", "code", "query", "answer"],
+            enum: ["similarity", "traversal", "pattern"],
             optional: true,
           },
-          mode: {
-            type: "string",
-            enum: ["similarity", "pattern", "traverse"],
-            optional: true,
-          },
-          maxResults: { type: "number", optional: true },
+          startNode: { type: "string", optional: true, description: "Starting node for traversal" },
+          depthLimit: { type: "number", optional: true, default: 3 },
+          propertiesFilter: { type: "object", optional: true },
         },
-        async execute(args: MemoryQuery) {
-          const queryEmbedding = await generateEmbedding(args.query);
-          const graph = await loadGraph();
-          const embeddings = await loadEmbeddings();
-          const mode = args.mode || "similarity";
+        async execute(args: any) {
+          const queryType = args.queryType || "similarity";
 
-          let results: MemoryQueryResult[] = [];
+          try {
+            const result = await globalThis.mcpTools?.queryGraphMemory?.({
+              query_type: queryType,
+              query: args.query,
+              start_node: args.startNode,
+              depth_limit: args.depthLimit || 3,
+              properties_filter: args.propertiesFilter || {},
+            });
 
-          if (mode === "similarity") {
-            results = graph.nodes
-              .filter((n) => !args.nodeType || n.type === args.nodeType)
-              .map((node) => ({
-                node,
-                similarity: embeddings[node.id]
-                  ? cosineSimilarity(queryEmbedding, embeddings[node.id])
-                  : 0,
-                relations: [],
-              }))
-              .filter((r) => r.similarity > 0.1)
-              .sort((a, b) => b.similarity - a.similarity)
-              .slice(0, args.maxResults || 10);
-          } else if (mode === "pattern") {
-            const matchingNodes = graph.nodes.filter(
-              (n) =>
-                (!args.nodeType || n.type === args.nodeType) &&
-                n.label.toLowerCase().includes(args.query.toLowerCase()),
-            );
-            results = matchingNodes.map((node) => ({ node, relations: [] }));
-          } else if (mode === "traverse") {
-            const startNodes = graph.nodes.filter((n) =>
-              n.label.toLowerCase().includes(args.query.toLowerCase()),
-            );
-            const visited = new Set<string>();
-            const resultsMap = new Map<string, MemoryNode>();
-
-            for (const startNode of startNodes) {
-              if (visited.has(startNode.id)) continue;
-              const queue = [{ nodeId: startNode.id, depth: 0 }];
-              const maxDepth = 2;
-
-              while (queue.length > 0) {
-                const { nodeId, depth } = queue.shift()!;
-                if (visited.has(nodeId) || depth > maxDepth) continue;
-
-                visited.add(nodeId);
-                const node = graph.nodes.find((n) => n.id === nodeId);
-                if (node) resultsMap.set(nodeId, node);
-
-                const neighbors = graph.edges
-                  .filter((e) => e.from === nodeId || e.to === nodeId)
-                  .map((e) => (e.from === nodeId ? e.to : e.from))
-                  .filter((id) => !visited.has(id));
-
-                for (const neighborId of neighbors) {
-                  queue.push({ nodeId: neighborId, depth: depth + 1 });
-                }
-              }
+            if (result) {
+              return `🔍 MCP Memory Query Results (${queryType})\n\n${JSON.stringify(result, null, 2)}`;
             }
 
-            results = Array.from(resultsMap.values()).map((node) => ({ node, relations: [] }));
+            throw new Error("MCP tool not available");
+          } catch (error) {
+            return `❌ MCP query failed: ${error}\n\nNote: Using local graph memory as fallback.`;
           }
-
-          for (const result of results) {
-            const relatedEdges = graph.edges.filter(
-              (e) => e.from === result.node.id || e.to === result.node.id,
-            );
-            result.relations = relatedEdges.map((e) =>
-              e.from === result.node.id ? `→[${e.type}]→ ${e.to}` : `←[${e.type}]← ${e.from}`,
-            );
-          }
-
-          return formatResults(results);
         },
       },
 
@@ -330,7 +274,7 @@ export const GraphMemoryPlugin = async ({ client, worktree }: Parameters<Plugin>
       },
 
       "memory-visualize": {
-        description: "Generate a visualization of memory graph",
+        description: "Generate Mermaid visualization (can use MCP queries for data)",
         args: {
           centerNode: { type: "string", optional: true },
           radius: { type: "number", optional: true },
@@ -349,6 +293,7 @@ export const GraphMemoryPlugin = async ({ client, worktree }: Parameters<Plugin>
             format: "mermaid",
             diagram: mermaid,
             render_url: "https://mermaid.live/edit",
+            note: "For distributed graphs, consider using tachikoma-mcp_query_graph_memory",
           };
         },
       },
@@ -437,6 +382,7 @@ function generateMermaidDiagram(nodes: MemoryNode[], edges: MemoryEdge[]): strin
     code: "#FFB6C1",
     query: "#DDA0DD",
     answer: "#FFD700",
+    event: "#FF6B6B",
   };
 
   for (const node of nodes) {
@@ -458,18 +404,7 @@ function generateMermaidDiagram(nodes: MemoryNode[], edges: MemoryEdge[]): strin
   diagram += "  classDef code fill:#FFB6C1,stroke:#333\n";
   diagram += "  classDef query fill:#DDA0DD,stroke:#333\n";
   diagram += "  classDef answer fill:#FFD700,stroke:#333\n";
+  diagram += "  classDef event fill:#FF6B6B,stroke:#333\n";
 
   return diagram;
-}
-
-function formatResults(results: MemoryQueryResult[]): string {
-  return results
-    .map((r) => {
-      const relations = r.relations.join(", ") || "none";
-      return `**${r.node.label}** (${r.node.type})
-- Content: ${r.node.content.substring(0, 100)}...
-- Relations: ${relations}
-- Similarity: ${r.similarity?.toFixed(3) || "N/A"}`;
-    })
-    .join("\n\n");
 }

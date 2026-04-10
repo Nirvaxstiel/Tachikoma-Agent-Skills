@@ -1,3 +1,17 @@
+/**
+ * RLM Handler - Recursive Language Model processing
+ *
+ * Handles large contexts by chunking, parallel processing, and hierarchical indexing.
+ *
+ * MCP Integration:
+ * - Uses tachikoma-mcp_enhanced_rlm_process when available
+ * - Falls back to local processing if MCP unavailable
+ * - Preserves configuration and adaptive chunking logic
+ *
+ * See: docs/internals/mcp-integration.md for MCP server details
+ * See: docs/research/rlm.md for RLM research backing
+ */
+
 import { join } from "node:path";
 
 import { CONFIG } from "../../constants/config";
@@ -104,16 +118,14 @@ export class RLMHandler {
   /**
    * Main entry point - process large context using RLM pattern
    *
-   * Note: Actual subagent execution would be done via OpenCode's Task tool
-   * This class handles the chunking and orchestration logic
+   * Uses MCP tool for enhanced RLM processing with hierarchical indexing
    */
   async processLargeContext(
     request: string,
     context: string,
-    options?: { model?: string; subagentPrompt?: string },
+    options?: { model?: string; subagentPrompt?: string; useMCP?: boolean },
   ): Promise<RLMResult> {
     const startTime = Date.now();
-
     const totalTokens = estimateTokens(context);
 
     if (totalTokens <= this.config.chunkSize) {
@@ -132,25 +144,55 @@ export class RLMHandler {
       };
     }
 
-    const chunks = this.adaptiveChunking(context);
-    const results = await this.processInWaves(chunks, options);
-    const response = this.synthesizeResults(request, results);
+    try {
+      const useMCP = options?.useMCP !== false;
 
-    const waves = Math.ceil(chunks.length / this.config.maxConcurrentChunks);
+      if (useMCP && globalThis.mcpTools?.enhancedRLMProcess) {
+        const mcpResult = await globalThis.mcpTools.enhancedRLMProcess({
+          content: context,
+          query: request,
+          use_hierarchical_indexing: true,
+          chunk_strategy: "semantic",
+        });
 
-    return {
-      success: true,
-      response,
-      chunksProcessed: chunks.length,
-      totalTokens,
-      waves,
-      metadata: {
-        chunkIds: chunks.map((c) => c.id),
-        chunkBoundaries: chunks.map((c) => c.boundary),
-        synthesisMethod: "parallel",
-        modelUsed: options?.model || "default",
-      },
-    };
+        return {
+          success: true,
+          response: mcpResult.processedContent || context,
+          chunksProcessed: mcpResult.chunkCount || 1,
+          totalTokens,
+          waves: mcpResult.waves || 1,
+          metadata: {
+            chunkIds: mcpResult.chunkIds || [],
+            chunkBoundaries: mcpResult.chunkBoundaries || [],
+            synthesisMethod: "mcp-hierarchical",
+            modelUsed: options?.model || "default",
+          },
+        };
+      }
+
+      throw new Error("MCP tool not available");
+    } catch (error) {
+      console.log(`⚠️  MCP RLM processing failed, using local fallback: ${error}`);
+
+      const chunks = this.adaptiveChunking(context);
+      const results = await this.processInWaves(chunks, options);
+      const response = this.synthesizeResults(request, results);
+      const waves = Math.ceil(chunks.length / this.config.maxConcurrentChunks);
+
+      return {
+        success: true,
+        response,
+        chunksProcessed: chunks.length,
+        totalTokens,
+        waves,
+        metadata: {
+          chunkIds: chunks.map((c) => c.id),
+          chunkBoundaries: chunks.map((c) => c.boundary),
+          synthesisMethod: "local-fallback",
+          modelUsed: options?.model || "default",
+        },
+      };
+    }
   }
 
   /**
