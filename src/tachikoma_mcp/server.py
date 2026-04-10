@@ -33,6 +33,7 @@ from .models import GraphEdge, GraphNode, SkillOutcome, TopologyPattern
 
 # Import tools
 from .tools.analyze_topology import analyze_topology
+from .tools.caveman import caveman_compress, caveman_validate
 from .tools.enhanced_rlm_process import enhanced_rlm_process
 from .tools.execute_with_verification import execute_with_verification
 from .tools.learn_skill_outcome import learn_skill_outcome
@@ -285,6 +286,42 @@ async def handle_list_tools(_: ListToolsRequest) -> ListToolsResult:
                 },
             ),
             Tool(
+                name="caveman_compress",
+                description="Detect if content is compressible natural language, return caveman compression instructions for the agent to follow. Validates file type and provides compression rules.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "content": {
+                            "type": "string",
+                            "description": "Text content to analyze for compression",
+                        },
+                        "file_path": {
+                            "type": "string",
+                            "description": "Optional file path for extension-based detection",
+                        },
+                    },
+                    "required": ["content"],
+                },
+            ),
+            Tool(
+                name="caveman_validate",
+                description="Validate that caveman-compressed text preserves all code blocks, URLs, headings, paths, and bullet structure from the original.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "original": {
+                            "type": "string",
+                            "description": "Original uncompressed text",
+                        },
+                        "compressed": {
+                            "type": "string",
+                            "description": "Caveman-compressed text to validate",
+                        },
+                    },
+                    "required": ["original", "compressed"],
+                },
+            ),
+            Tool(
                 name="enhanced_rlm_process",
                 description="Process large context using enhanced RLM with hierarchical indexing",
                 inputSchema={
@@ -317,26 +354,32 @@ async def handle_list_tools(_: ListToolsRequest) -> ListToolsResult:
     )
 
 
-@server.call_tool()
-async def handle_call_tool(request: CallToolRequest) -> List[TextContent]:
-    """Handle tool calls"""
-    name = request.name
-    arguments = request.arguments or {}
-    logger.info(f"Calling tool: {name} with arguments: {arguments}")
-
+async def _dispatch_tool(name: str, arguments: dict) -> str:
+    """Route tool call to the correct handler."""
     if name == "analyze_topology":
-        result = await analyze_topology(arguments)
+        return await analyze_topology(arguments)
+    elif name == "caveman_compress":
+        return await caveman_compress(arguments)
+    elif name == "caveman_validate":
+        return await caveman_validate(arguments)
     elif name == "execute_with_verification":
-        result = await execute_with_verification(arguments)
+        return await execute_with_verification(arguments)
     elif name == "learn_skill_outcome":
-        result = await learn_skill_outcome(arguments, skill_outcomes, graph_nodes)
+        return await learn_skill_outcome(arguments, skill_outcomes, graph_nodes)
     elif name == "query_graph_memory":
-        result = await query_graph_memory(arguments, graph_nodes, graph_edges)
+        return await query_graph_memory(arguments, graph_nodes, graph_edges)
     elif name == "enhanced_rlm_process":
-        result = await enhanced_rlm_process(arguments)
+        return await enhanced_rlm_process(arguments)
     else:
         raise ValueError(f"Unknown tool: {name}")
 
+
+@server.call_tool()
+async def handle_call_tool(name: str, arguments: dict) -> List[TextContent]:
+    """Handle tool calls via MCP SDK"""
+    arguments = arguments or {}
+    logger.info(f"Calling tool: {name} with arguments: {arguments}")
+    result = await _dispatch_tool(name, arguments)
     return [TextContent(type="text", text=result)]
 
 
@@ -378,7 +421,9 @@ class TachikomaMCPServer:
 
     async def handle_call_tool(self, request):
         """Handle tool calls"""
-        return await handle_call_tool(request)
+        name = request.name
+        arguments = request.arguments or {}
+        return [TextContent(type="text", text=await _dispatch_tool(name, arguments))]
 
 
 def main(argv=None):

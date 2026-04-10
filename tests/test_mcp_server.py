@@ -354,6 +354,8 @@ class TestMCPServer:
 
         expected_tools = [
             "analyze_topology",
+            "caveman_compress",
+            "caveman_validate",
             "execute_with_verification",
             "learn_skill_outcome",
             "query_graph_memory",
