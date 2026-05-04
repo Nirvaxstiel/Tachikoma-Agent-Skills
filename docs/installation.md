@@ -35,19 +35,74 @@ opencode
 │   │       ├── core.ts
 │   │       ├── verifier.ts
 │   │       ├── rlm-handler.ts
+│   │       ├── topology-classifier.ts
+│   │       ├── model-select.ts
 │   │       ├── memory/
 │   │       │   ├── user-memory.ts      # USER.md / PROJECT.md memory
-│   │       │   └── session-summary.ts  # Session history
+│   │       │   ├── session-summary.ts  # Session history
+│   │       │   └── graph-memory-plugin.ts  # Graph-based memory queries
+│   │       ├── delegation/
+│   │       │   └── subagent-pool.ts    # Subagent spawning
+│   │       ├── rollback/
+│   │       │   └── checkpoint-manager.ts  # Checkpoint/rollback system
 │   │       ├── graph-routing/       # Dijkstra routing plugin
 │   │       └── opensage/            # Attention ensemble + coordinator
-│   ├── skills/                  # 8 skills (caveman, plan, dev, think, etc.)
+│   ├── skills/                  # 10 skills (see Skills section)
 │   └── agents/
 │       └── tachikoma.md         # Primary agent
 ├── plans/                       # Plan skill state (PAUL methodology)
 │   ├── STATE.md
 │   ├── PLAN-{id}.md
 │   └── SUMMARY-{id}.md
+├── checkpoints/                 # Checkpoint storage (non-git repos)
 └── opencode.json                # Copy this to project root
+```
+
+### Available Tools
+
+Tachikoma provides **12 native tools** (all plugin-native, no MCP required for core functionality):
+
+| Tool | Description |
+|------|-------------|
+| `tachikoma.model-select` | Detect active model and select best edit format |
+| `tachikoma.context-status` | Load project context with U-shaped position bias |
+| `tachikoma.graph-memory` | Graph memory queries (similarity, traversal, stats) |
+| `tachikoma.load-memory` | Load user prefs and project context (checks repo-local first) |
+| `tachikoma.init-project-memory` | Initialize repo-specific project memory at `.opencode/PROJECT.md` |
+| `tachikoma.save-memory` | Save user/project memory (creates files on first use) |
+| `tachikoma.append-session-summary` | Append session summary with task, files modified, decisions |
+| `tachikoma.get-recent-sessions` | Retrieve recent session summaries (filterable by count/days) |
+| `tachikoma.delegate-task` | Spawn subagent for parallel independent workstreams |
+| `tachikoma.checkpoint` | Create named checkpoint before risky operations (git stash or file copy) |
+| `tachikoma.list-checkpoints` | List available checkpoints with metadata |
+| `tachikoma.rollback` | Rollback to previous checkpoint (use 'latest' or specific ID) |
+
+### Available Skills
+
+| Skill | Description |
+|-------|-------------|
+| `plan` | PAUL methodology - Plan-Apply-Unify Loop with mandatory closure |
+| `dev` | Execute code implementation with quality verification |
+| `context` | Retrieve and manage knowledge across codebases, documentation, and large contexts |
+| `think` | Functional thinking principles for code design |
+| `meta` | Self-generating agent topology and dynamic tool synthesis (OpenSage) |
+| `self-improving` | Save completed procedures as reusable skills |
+| `caveman` | Token-compressed communication (65-75% reduction) |
+| `caveman-commit` | Ultra-compressed Conventional Commits messages |
+| `caveman-review` | Ultra-compressed code review comments |
+| `code-review` | Full code review for correctness, quality, security, maintainability |
+
+### MCP Integration (Optional)
+
+The MCP server (`src/server/`) is **optional** for feat/v2. It provides additional capabilities:
+
+- `caveman_compress` — detect compressible text, get compression instructions
+- Enhanced graph memory queries (alternative to plugin-native)
+- Enhanced RLM processing (alternative to plugin-native)
+
+**MCP smoke tests status**: See `tests/mcp/` for MCP server and configuration tests. Run with:
+```bash
+bun test tests/mcp/
 ```
 
 ### Memory Directory
@@ -91,29 +146,39 @@ mkdir -p .opencode && cp ~/.opencode/memory/PROJECT.md ./.opencode/PROJECT.md
 **Tools for memory management**:
 - `tachikoma.load-memory` — Load user prefs and project context (checks repo-local first)
 - `tachikoma.init-project-memory` — Initialize repo memory at cwd/.opencode/PROJECT.md
-- `tachikoma.save-memory` — Save user/project memory (saves to global by default)
-- `tachikoma.append-session-summary` — Record session summary
-- `tachikoma.get-recent-sessions` — Retrieve recent session history
+- `tachikoma.save-memory` — Save user/project memory (creates files on first use)
+- `tachikoma.append-session-summary` — Record session summary with metadata
+- `tachikoma.get-recent-sessions` — Retrieve recent session history (filterable by count/days)
 
 ## MCP Server
 
-The MCP server is at `src/server/` (merged from tachikoma-mcp repo).
+The MCP server is **optional** in feat/v2. Most functionality is now plugin-native.
 
 ```bash
-# Install
+# Install (optional)
 pip install -e src/server
 
 # Verify
 tachikoma-mcp-python --version
 ```
 
-**Note:** MCP is still required for `caveman_compress` tool only. Graph memory queries (`tachikoma.graph-memory`) are now plugin-native and communicate with tachikoma directly via subprocess — no MCP dependency.
+### What MCP Provides (Optional)
 
-Tools available via MCP:
 - `caveman_compress` — detect compressible text, get compression instructions
+- Enhanced graph memory queries (alternative to plugin-native)
+- Enhanced RLM processing (alternative to plugin-native)
 
-Tools available via plugin (native):
-- `tachikoma.graph-memory` — graph memory queries (similarity, traversal, stats)
+### Plugin-Native Tools (Default)
+
+The following tools run without MCP:
+
+| Tool | Description |
+|------|-------------|
+| `tachikoma.graph-memory` | Graph memory queries (plugin-native) |
+| `tachikoma.delegate-task` | Spawn subagent for parallel tasks |
+| `tachikoma.checkpoint` | Create checkpoint before risky ops |
+| `tachikoma.list-checkpoints` | List available checkpoints |
+| `tachikoma.rollback` | Rollback to previous checkpoint |
 
 ## Verification
 
@@ -122,10 +187,16 @@ Tools available via plugin (native):
 opencode --debug 2>&1 | grep -i tachikoma
 
 # Check skills
-opencode skill 2>&1 | grep -i caveman
+opencode skill 2>&1 | grep -i tachikoma
 
 # Check agent
 opencode agent 2>&1 | grep -i tachikoma
+
+# Run smoke tests
+bun test tests/smoke/
+
+# Run MCP tests (if MCP installed)
+bun test tests/mcp/
 ```
 
 ## After Installation

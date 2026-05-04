@@ -4,7 +4,7 @@ layout: home
 hero:
   name: Tachikoma
   text: Agent Orchestration
-  tagline: Research-backed AI agent system with Plan methodology
+  tagline: Research-backed AI agent system with Plan methodology and feat/v2 features
   actions:
     - theme: brand
       text: Get Started
@@ -20,17 +20,21 @@ features:
     details: Structured development with Plan-Apply-Unify loops. Quality over speed-for-speed's-sake.
   - title: CARL Quality Gates
     details: Context Augmentation & Reinforcement Layer with dynamic rule loading and priority-based enforcement.
-  - title: Research-Backed
-    details: Built on peer-reviewed research from AI conferences and arXiv papers.
+  - title: Checkpoint & Rollback
+    details: Create checkpoints before risky operations and rollback seamlessly. Git stash or file-copy based.
+  - title: Session Memory
+    details: Persistent memory across sessions with repo-local isolation. Load project context automatically.
+  - title: Task Delegation
+    details: Spawn subagents for parallel independent workstreams. Scale work horizontally.
   - title: Model-Aware Editing
-    details: Dynamic edit format selection optimized for specific LLM models.
+    details: Dynamic edit format selection optimized for specific LLM models (Claude, Gemini, GPT, etc.).
   - title: Verification Loops
     details: Generator-Verifier-Reviser pattern for high-stakes implementations.
   - title: Subagents
     details: Workers for large-context discovery and parallel task execution.
   - title: Cost-Aware Routing
     details: Match task complexity to execution strategy for optimal speed vs accuracy.
-  - title: MCP Integration
+  - title: MCP Integration (Optional)
     details: Leverages Model Context Protocol servers for enhanced capabilities with local fallbacks.
 ---
 

@@ -30,7 +30,7 @@ Position-aware context loading optimizes token placement for maximum effectivene
 
 Specialized skills handle specific task types with optimal tool usage.
 
-- 5 core skills (down from 11)
+- 10 core skills (plan, dev, context, think, meta, self-improving, caveman, caveman-commit, caveman-review, code-review)
 - Dynamic skill loading
 - Model-aware operations
 - Verification loops for critical tasks
@@ -61,6 +61,41 @@ Never skip UNIFY — this is the heartbeat that prevents drift.
 [Learn more →](./paul-methodology.md)
 
 ## Advanced Capabilities
+
+### Checkpoint & Rollback
+
+Create named checkpoints before risky operations. Supports git stash (git repos) or file-copy (non-git repos).
+
+- `tachikoma.checkpoint` — Create checkpoint with optional label
+- `tachikoma.list-checkpoints` — List all available checkpoints
+- `tachikoma.rollback` — Rollback to specific checkpoint or 'latest'
+
+```typescript
+// Example workflow
+await tachikoma.checkpoint({ label: "before-migration" });
+// ... risky operation ...
+await tachikoma.rollback({ target: "latest" }); // if something goes wrong
+```
+
+### Session Memory
+
+Persistent memory across sessions with repo-local isolation. Memory travels with the repo.
+
+- `tachikoma.load-memory` — Load user prefs and project context
+- `tachikoma.save-memory` — Save user/project memory
+- `tachikoma.init-project-memory` — Initialize repo-specific memory
+- `tachikoma.append-session-summary` — Record session with metadata
+- `tachikoma.get-recent-sessions` — Retrieve recent sessions
+
+**Repo-local memory**: `.opencode/PROJECT.md` stays with the repository for team context sharing.
+
+### Task Delegation
+
+Spawn subagents for parallel independent workstreams.
+
+- `tachikoma.delegate-task` — Run task in parallel with dedicated subagent
+- General and explore subagent types
+- Summary-based result aggregation
 
 ### Model-Aware Editing
 
@@ -144,6 +179,23 @@ Source: Can.ac blog (Feb 2026)
 | Subagent          | Large-context discovery, parallel tasks | Very High  | 45-120s |
 | RLM               | Massive contexts, 10M+ tokens           | Very High  | 2-5min  |
 
+## Tool Reference
+
+| Need                 | Use Tool                        | Description                           |
+| -------------------- | ------------------------------- | ------------------------------------- |
+| Checkpoint work      | `tachikoma.checkpoint`          | Create named checkpoint               |
+| List checkpoints     | `tachikoma.list-checkpoints`    | Show all checkpoints                  |
+| Restore state        | `tachikoma.rollback`            | Rollback to checkpoint                |
+| Load memory          | `tachikoma.load-memory`         | Load user/project context             |
+| Save memory          | `tachikoma.save-memory`         | Save user/project memory              |
+| Init repo memory     | `tachikoma.init-project-memory` | Create `.opencode/PROJECT.md`         |
+| Record session       | `tachikoma.append-session-summary` | Record session with metadata       |
+| Get session history  | `tachikoma.get-recent-sessions` | Retrieve recent sessions              |
+| Delegate task        | `tachikoma.delegate-task`       | Spawn parallel subagent               |
+| Model selection      | `tachikoma.model-select`        | Detect model, select edit format      |
+| Context status       | `tachikoma.context-status`      | U-shaped position bias config         |
+| Graph memory         | `tachikoma.graph-memory-*`       | Graph-based memory queries            |
+
 ## Decision Flow
 
 ```
@@ -171,13 +223,16 @@ Reflect on approach (freedom to question, flag issues)
 | Need                 | Use                   | Link                                   |
 | -------------------- | --------------------- | -------------------------------------- |
 | Understand routing   | Intent Classification | [→](./intent-routing.md)               |
-| Manage context       | Context Management    | [→](./context-management.md)           |
-| Execute tasks        | Skill Execution       | [→](./skill-execution.md)              |
-| Chain skills         | Skill Chains          | [→](./skill-chains.md)                 |
-| Structure work       | PAUL Methodology      | [→](./paul-methodology.md)             |
+| Manage context       | Context Management    | [→](./context-management.md)            |
+| Execute tasks        | Skill Execution       | [→](./skill-execution.md)               |
+| Chain skills         | Skill Chains          | [→](./skill-chains.md)                  |
+| Structure work       | PAUL Methodology      | [→](./paul-methodology.md)              |
+| Checkpoint/rollback  | Checkpoint & Rollback | [→](#checkpoint--rollback)              |
+| Session memory       | Session Memory        | [→](#session-memory)                    |
+| Delegate tasks       | Task Delegation       | [→](#task-delegation)                   |
 | Model-specific edits | Model-Aware Editing   | [→](./model-aware-editing.md)          |
-| Large contexts       | Subagents             | [→](./subagents.md)                    |
-| Verify correctness   | Verification Loops    | [→](../research/verification-loops.md) |
+| Large contexts       | Subagents             | [→](./subagents.md)                     |
+| Verify correctness   | Verification Loops    | [→](../research/verification-loops.md)   |
 
 ## Next Steps
 

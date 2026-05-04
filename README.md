@@ -8,12 +8,15 @@ A general purpose AI agent named after the curious AI tanks from _Ghost in the S
 
 ## Features
 
+- **Checkpoint & Rollback**: Create named checkpoints before risky operations. Supports git stash or file-copy based rollback.
+- **Session Memory**: Persistent memory across sessions with repo-local isolation. Memory travels with the repo.
+- **Task Delegation**: Spawn subagents for parallel independent workstreams.
 - **Cost-Aware Routing**: Match task complexity to optimal execution strategy
 - **PAUL Methodology**: Structured Plan-Apply-Unify loop with mandatory closure
 - **Verification Loops**: Generator-Verifier-Reviser pattern for complex tasks
 - **Position-Aware Context**: Mitigates U-shaped attention bias in LLMs
 - **Model-Aware Editing**: Dynamic edit format selection based on model
-- **MCP Integration**: Leverages external Model Context Protocol servers for enhanced capabilities
+- **MCP Integration (Optional)**: Leverages external Model Context Protocol servers for enhanced capabilities
 
 ## Installation
 
@@ -30,6 +33,38 @@ After installation, run `opencode` and use `@tachikoma` in the TUI.
 
 See [Installation Guide](docs/installation.md) for detailed installation options.
 
+## Available Tools
+
+| Tool | Description |
+|------|-------------|
+| `tachikoma.checkpoint` | Create named checkpoint before risky operations |
+| `tachikoma.list-checkpoints` | List available checkpoints |
+| `tachikoma.rollback` | Rollback to a previous checkpoint |
+| `tachikoma.load-memory` | Load user prefs and project context |
+| `tachikoma.save-memory` | Save user/project memory |
+| `tachikoma.init-project-memory` | Initialize repo-specific memory |
+| `tachikoma.append-session-summary` | Record session with metadata |
+| `tachikoma.get-recent-sessions` | Retrieve recent session history |
+| `tachikoma.delegate-task` | Spawn subagent for parallel tasks |
+| `tachikoma.model-select` | Detect model, select edit format |
+| `tachikoma.context-status` | U-shaped position bias config |
+| `tachikoma.graph-memory-*` | Graph-based memory queries |
+
+## Available Skills
+
+| Skill | Description |
+|-------|-------------|
+| `plan` | PAUL methodology planning |
+| `dev` | Execute code implementation |
+| `context` | Retrieve and manage knowledge |
+| `think` | Functional thinking principles |
+| `meta` | Self-generating agent topology |
+| `self-improving` | Save procedures as skills |
+| `caveman` | Token-compressed communication |
+| `caveman-commit` | Ultra-compressed commits |
+| `caveman-review` | Ultra-compressed reviews |
+| `code-review` | Full code review |
+
 ## Themes
 
 Ghost in the Shell inspired themes for OpenCode terminal:
@@ -43,20 +78,40 @@ Ghost in the Shell inspired themes for OpenCode terminal:
 
 ### Using Tachikoma Tools
 
-> Tachikoma exposes scripts as OpenCode tools and integrates with MCP servers. See [MCP Integration](docs/internals/mcp-integration.md) for details on external tools.
+> Tachikoma exposes scripts as OpenCode tools. All core tools are plugin-native (no MCP required).
 
 ```bash
 @tachikoma Check edit format for current model
-# → Uses tachikoma.edit-format-selector (MCP or local)
+# → Uses tachikoma.model-select
 
-@tachikoma Query graph memory
-# → Uses tachikoma-mcp_query_graph_memory (MCP with local fallback)
+@tachikoma Create checkpoint before migration
+# → Uses tachikoma.checkpoint
 
-@tachikoma Process large context
-# → Uses tachikoma-mcp_enhanced_rlm_process (MCP with local fallback)
+@tachikoma List available checkpoints
+# → Uses tachikoma.list-checkpoints
+
+@tachikoma Rollback to latest checkpoint
+# → Uses tachikoma.rollback
+
+@tachikoma Load project memory
+# → Uses tachikoma.load-memory
+
+@tachikoma Get recent sessions
+# → Uses tachikoma.get-recent-sessions
+
+@tachikoma Delegate task to subagent
+# → Uses tachikoma.delegate-task
 ```
 
 ## Core Concepts
+
+### Checkpoint & Rollback
+
+Create named checkpoints before risky operations:
+
+1. **checkpoint** — Create named checkpoint (git stash or file-copy)
+2. **list-checkpoints** — List all available checkpoints
+3. **rollback** — Rollback to specific checkpoint or 'latest'
 
 ### Cost-Aware Routing
 
@@ -66,6 +121,18 @@ Ghost in the Shell inspired themes for OpenCode terminal:
 | Medium     | Single skill      | 5-15s   |
 | High       | Skill chain       | 15-45s  |
 | Very High  | RLM orchestration | 45-120s |
+
+### Session Memory
+
+Persistent memory across sessions with repo-local isolation:
+
+- `load-memory` — Load user prefs and project context
+- `save-memory` — Save user/project memory
+- `init-project-memory` — Initialize repo-specific memory at `.opencode/PROJECT.md`
+- `append-session-summary` — Record session with task, files, decisions
+- `get-recent-sessions` — Retrieve recent session history
+
+**Repo-local memory**: `.opencode/PROJECT.md` stays with the repo for team context sharing.
 
 ### PAUL Methodology
 
