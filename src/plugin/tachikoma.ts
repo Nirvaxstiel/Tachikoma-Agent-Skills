@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 import { tool } from "@opencode-ai/plugin/tool";
 import { detectAndSelect } from "./tachikoma/model-harness";
+import { CheckpointManager } from "./tachikoma/rollback/checkpoint-manager";
 import { loadProjectContext, positionBiasConfig } from "./tachikoma/context-manager";
 import { GraphMemoryPlugin } from "./tachikoma/memory/graph-memory-plugin";
 import { loadAllMemory, saveUserMemory, saveProjectMemory, appendToMemory, initProjectMemory } from "./tachikoma/memory/user-memory";
@@ -107,8 +108,6 @@ export const TachikomaPlugin = async (ctx: any) => {
             : await getRecentSessions(Math.min(args.count || 5, 20));
           return JSON.stringify(sessions, null, 2);
         },
-      }),
-
       "tachikoma.delegate-task": tool({
         description: "Spawn a subagent to run a task in parallel. The subagent completes and returns a text summary. Use for parallel independent workstreams.",
         args: {
@@ -118,6 +117,69 @@ export const TachikomaPlugin = async (ctx: any) => {
         async execute(args) {
           const result = await spawnSubagent(args.agent || "general", args.task);
           return result.summary;
+        },
+      }),
+
+      "tachikoma.checkpoint": tool({
+        description: "Create a named checkpoint before a risky operation. Stores working directory state via git stash or file copy. Returns checkpoint ID for later rollback.",
+        args: {
+          label: tool.schema.string().optional().describe("Checkpoint label (default: auto-generated)"),
+          cwd: tool.schema.string().optional().describe("Working directory (defaults to current working directory)"),
+        },
+        async execute(args) {
+          const manager = new CheckpointManager(args.cwd);
+          try {
+            const checkpointId = await manager.createCheckpoint(args.label || "auto");
+            return JSON.stringify({ success: true, checkpointId, message: `Checkpoint created: ${checkpointId}` }, null, 2);
+          } catch (error: any) {
+            return JSON.stringify({ success: false, error: error.message }, null, 2);
+          }
+        },
+      }),
+
+      "tachikoma.list-checkpoints": tool({
+        description: "List available checkpoints. Shows all checkpoints created via tachikoma.checkpoint.",
+        args: {
+          cwd: tool.schema.string().optional().describe("Working directory (defaults to current working directory)"),
+        },
+        async execute(args) {
+          const manager = new CheckpointManager(args.cwd);
+          try {
+            const checkpoints = await manager.listCheckpoints();
+            if (checkpoints.length === 0) {
+              return JSON.stringify({ checkpoints: [], message: "No checkpoints found." }, null, 2);
+            }
+            return JSON.stringify({ checkpoints, message: `${checkpoints.length} checkpoint(s) found` }, null, 2);
+          } catch (error: any) {
+            return JSON.stringify({ success: false, error: error.message }, null, 2);
+          }
+        },
+      }),
+
+      "tachikoma.rollback": tool({
+        description: "Rollback to a previous checkpoint. Restores working directory to checkpoint state. Use 'latest' for most recent checkpoint.",
+        args: {
+          target: tool.schema.string().optional().describe("Checkpoint ID from list, or 'latest' (default: latest)"),
+          cwd: tool.schema.string().optional().describe("Working directory (defaults to current working directory)"),
+        },
+        async execute(args) {
+          const manager = new CheckpointManager(args.cwd);
+          let targetId = args.target || "latest";
+          
+          if (targetId === "latest") {
+            const checkpoints = await manager.listCheckpoints();
+            if (checkpoints.length === 0) {
+              return JSON.stringify({ success: false, error: "No checkpoints found. Use tachikoma.checkpoint first." }, null, 2);
+            }
+            targetId = checkpoints[0].id;
+          }
+          
+          try {
+            await manager.rollbackTo(targetId);
+            return JSON.stringify({ success: true, message: `Rolled back to checkpoint: ${targetId}` }, null, 2);
+          } catch (error: any) {
+            return JSON.stringify({ success: false, error: error.message }, null, 2);
+          }
         },
       }),
     },

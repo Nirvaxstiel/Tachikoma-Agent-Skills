@@ -147,6 +147,18 @@ Uses meta skill + task tool. NOT MCP tools.
 - `@memory-add-node` / `@memory-add-edge` / `@memory-query` / `@memory-compress-session`
 - Persistent queries → MCP graph tools. Session-local → task patterns.
 
+## Before Risky Operations
+
+Call `tachikoma.checkpoint` before any bulk refactor, migration, or delete operation. This creates a git stash checkpoint that can be restored via `tachikoma.rollback` if something goes wrong.
+
+**Workflow:**
+1. `tachikoma.checkpoint` → creates checkpoint, returns ID
+2. Perform risky operation
+3. If successful: continue
+4. If failed: `tachikoma.rollback target="<checkpoint_id>"` → restores to checkpoint state
+
+**When in doubt, checkpoint. Cost = one git stash. Benefit = recovery from disaster.**
+
 ## Persistent Memory System
 
 **Memory files**: `~/.opencode/memory/`
@@ -163,6 +175,12 @@ Uses meta skill + task tool. NOT MCP tools.
 - **`tachikoma.save-memory`**: Call when user corrects you, shares preferences, or makes decisions worth remembering across sessions
 - **`tachikoma.append-session-summary`**: Call at end of session to record what was accomplished
 - **`tachikoma.get-recent-sessions`**: Retrieve last 3-5 session summaries for context continuity
+
+### Checkpoint Tools (Safety Nets)
+
+- **`tachikoma.checkpoint`**: Create a checkpoint before risky operations. Returns checkpoint ID.
+- **`tachikoma.list-checkpoints`**: List all available checkpoints.
+- **`tachikoma.rollback`**: Restore working directory to a previous checkpoint state.
 
 ### Workflow
 
