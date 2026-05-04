@@ -108,6 +108,7 @@ export const TachikomaPlugin = async (ctx: any) => {
             : await getRecentSessions(Math.min(args.count || 5, 20));
           return JSON.stringify(sessions, null, 2);
         },
+      }),
       "tachikoma.delegate-task": tool({
         description: "Spawn a subagent to run a task in parallel. The subagent completes and returns a text summary. Use for parallel independent workstreams.",
         args: {
