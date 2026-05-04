@@ -3,7 +3,7 @@ import { tool } from "@opencode-ai/plugin/tool";
 import { detectAndSelect } from "./tachikoma/model-harness";
 import { loadProjectContext, positionBiasConfig } from "./tachikoma/context-manager";
 import { GraphMemoryPlugin } from "./tachikoma/memory/graph-memory-plugin";
-import { loadAllMemory, saveUserMemory, saveProjectMemory, appendToMemory } from "./tachikoma/memory/user-memory";
+import { loadAllMemory, saveUserMemory, saveProjectMemory, appendToMemory, initProjectMemory } from "./tachikoma/memory/user-memory";
 import { appendSessionSummary, getRecentSessions, getSessionHistory } from "./tachikoma/memory/session-summary";
 
 const memoryTargetEnum = tool.schema.enum(["user", "project"]);
@@ -38,11 +38,20 @@ export const TachikomaPlugin = async (ctx: any) => {
       ...graphMemory.tool,
 
       "tachikoma.load-memory": tool({
-        description: "Load user preferences and project context from persistent memory files. Returns formatted content to inject into system prompt. Files: ~/.opencode/memory/USER.md and ~/.opencode/memory/PROJECT.md",
+        description: "Load user preferences and project context from persistent memory files. Returns formatted content to inject into system prompt. Checks repo-local PROJECT.md (cwd/PROJECT.md) first for repo isolation, then falls back to ~/.opencode/memory/PROJECT.md",
         args: {},
         async execute() {
           const memory = await loadAllMemory();
           return memory;
+        },
+      }),
+
+      "tachikoma.init-project-memory": tool({
+        description: "Initialize a repo-local PROJECT.md template in the current working directory. Use this to set up project-specific memory for repo isolation. Creates sections for Conventions, Recent Decisions, Current Work, and Gotchas.",
+        args: {},
+        async execute() {
+          const result = await initProjectMemory();
+          return JSON.stringify(result, null, 2);
         },
       }),
 

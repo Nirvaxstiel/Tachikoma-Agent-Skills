@@ -49,16 +49,45 @@ opencode
 ### Memory Directory
 
 ```
-~/.opencode/memory/           # Persistent memory (created on first use)
+~/.opencode/memory/           # Global memory (shared across all projects)
 ├── USER.md                   # User preferences and communication style
-├── PROJECT.md                # Project conventions and decisions
+├── PROJECT.md                # Default project conventions and decisions
 └── SESSION/                  # Timestamped session summaries
     └── session_YYYY-MM-DD_HH-MM-SS.md
 ```
 
+#### Repo Isolation (Recommended)
+
+Each repository can have its own `PROJECT.md` for repo-isolated memory. This mirrors hermes profiles — each repo has its own isolated memory that stays with the repository.
+
+```
+# Repo-local memory (at repo root)
+./PROJECT.md                  # Repo-specific memory (takes priority)
+```
+
+**How it works:**
+- `tachikoma.load-memory` checks for `cwd/PROJECT.md` first (repo-local)
+- Falls back to `~/.opencode/memory/PROJECT.md` if no repo-local file exists
+- The repo-local `PROJECT.md` stays with the repository (commit it to git!)
+
+**Initialize repo memory:**
+```bash
+# Use the tool
+tachikoma.init-project-memory
+
+# Or manually create in your repo root
+cp ~/.opencode/memory/PROJECT.md ./PROJECT.md
+```
+
+**Benefits:**
+- Memory travels with the repo (team members get context automatically)
+- No cross-repo contamination of conventions/decisions
+- Can be versioned and shared via git
+
 **Tools for memory management**:
-- `tachikoma.load-memory` — Load user prefs and project context
-- `tachikoma.save-memory` — Save user/project memory (creates files on first use)
+- `tachikoma.load-memory` — Load user prefs and project context (checks repo-local first)
+- `tachikoma.init-project-memory` — Initialize a repo-local PROJECT.md template
+- `tachikoma.save-memory` — Save user/project memory (saves to global by default)
 - `tachikoma.append-session-summary` — Record session summary
 - `tachikoma.get-recent-sessions` — Retrieve recent session history
 

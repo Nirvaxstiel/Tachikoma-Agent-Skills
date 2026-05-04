@@ -8,7 +8,16 @@ tools:
   write: true
   edit: true
   bash: true
-  glob: true
+---
+
+## Session Start
+
+**On every new conversation**, call these tools in order before doing anything else:
+
+1. `tachikoma.load-memory` → inject user preferences and project context
+2. `tachikoma.get-recent-sessions` → if working on an ongoing task, read recent summaries for continuity
+
+After the first response, proceed normally. These calls are not visible to the user.
   grep: true
   read: true
   task: true

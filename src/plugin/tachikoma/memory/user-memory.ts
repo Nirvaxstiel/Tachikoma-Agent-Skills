@@ -9,6 +9,20 @@ const MEMORY_BASE = join(HOME_DIR, ".opencode", "memory");
 const USER_PATH = join(MEMORY_BASE, "USER.md");
 const PROJECT_PATH = join(MEMORY_BASE, "PROJECT.md");
 
+/**
+ * Get the repo-local PROJECT.md path (cwd/PROJECT.md)
+ */
+export function getLocalProjectPath(): string {
+  return join(process.cwd(), "PROJECT.md");
+}
+
+/**
+ * Check if a repo-local PROJECT.md exists
+ */
+export function hasLocalProjectMemory(): boolean {
+  return existsSync(getLocalProjectPath());
+}
+
 const DEFAULT_USER_TEMPLATE = `# [Your Name]
 
 ## Preferences
@@ -33,9 +47,13 @@ const DEFAULT_PROJECT_TEMPLATE = `# [Project Name]
 - Architecture patterns:
 - Testing requirements:
 
-## Decisions
-- Why certain approaches were chosen:
+## Recent Decisions
+- Key architectural choices and rationale:
 - Trade-offs documented:
+
+## Current Work
+- What's being actively worked on:
+- Priority tasks:
 
 ## Gotchas
 - Common pitfalls to avoid:
@@ -43,6 +61,29 @@ const DEFAULT_PROJECT_TEMPLATE = `# [Project Name]
 
 ## Context
 - Project-specific knowledge:
+`;
+
+/**
+ * Enhanced project template for repo-local PROJECT.md
+ */
+const REPO_PROJECT_TEMPLATE = `# [Project Name]
+
+## Conventions
+- Naming conventions:
+- Architecture patterns:
+- Testing requirements:
+
+## Recent Decisions
+- Why certain approaches were chosen:
+- Trade-offs documented:
+
+## Current Work
+- What was being worked on:
+- Active tasks and progress:
+
+## Gotchas
+- Common pitfalls to avoid:
+- Known issues or workarounds:
 `;
 
 async function ensureMemoryDir(): Promise<void> {
@@ -74,11 +115,28 @@ export async function loadUserMemory(): Promise<{ user: string | null; project: 
     logger.warn(`Failed to read USER.md: ${USER_PATH}`);
   }
 
-  try {
-    projectContent = await readFile(PROJECT_PATH, "utf-8");
-    projectContent = projectContent.trim() || null;
-  } catch {
-    logger.warn(`Failed to read PROJECT.md: ${PROJECT_PATH}`);
+  // Try repo-local PROJECT.md first, then fall back to global
+  const localProjectPath = getLocalProjectPath();
+  if (existsSync(localProjectPath)) {
+    try {
+      projectContent = await readFile(localProjectPath, "utf-8");
+      projectContent = projectContent.trim() || null;
+      if (projectContent) {
+        logger.debug(`Loaded repo-local PROJECT.md: ${localProjectPath}`);
+      }
+    } catch {
+      logger.warn(`Failed to read local PROJECT.md: ${localProjectPath}`);
+    }
+  }
+
+  // Fall back to global PROJECT.md if no local one exists
+  if (!projectContent) {
+    try {
+      projectContent = await readFile(PROJECT_PATH, "utf-8");
+      projectContent = projectContent.trim() || null;
+    } catch {
+      logger.warn(`Failed to read PROJECT.md: ${PROJECT_PATH}`);
+    }
   }
 
   return { user: userContent, project: projectContent };
@@ -145,4 +203,21 @@ export async function appendToMemory(
   return { success: true, path };
 }
 
-export { USER_PATH, PROJECT_PATH, MEMORY_BASE };
+/**
+ * Initialize a repo-local PROJECT.md template in the current directory.
+ * This creates a fresh memory file for repo isolation.
+ */
+export async function initProjectMemory(): Promise<{ success: boolean; path: string; created: boolean }> {
+  const localPath = getLocalProjectPath();
+
+  if (existsSync(localPath)) {
+    logger.info(`Repo-local PROJECT.md already exists: ${localPath}`);
+    return { success: true, path: localPath, created: false };
+  }
+
+  await writeFile(localPath, REPO_PROJECT_TEMPLATE);
+  logger.info(`Created repo-local PROJECT.md: ${localPath}`);
+  return { success: true, path: localPath, created: true };
+}
+
+export { USER_PATH, PROJECT_PATH, MEMORY_BASE, REPO_PROJECT_TEMPLATE };
