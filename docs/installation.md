@@ -55,9 +55,13 @@ pip install -e src/server
 tachikoma-mcp-python --version
 ```
 
-Tools available:
-- `query_graph_memory` — graph memory queries (similarity, traversal, pattern)
+**Note:** MCP is still required for `caveman_compress` tool only. Graph memory queries (`tachikoma.graph-memory`) are now plugin-native and communicate with tachikoma directly via subprocess — no MCP dependency.
+
+Tools available via MCP:
 - `caveman_compress` — detect compressible text, get compression instructions
+
+Tools available via plugin (native):
+- `tachikoma.graph-memory` — graph memory queries (similarity, traversal, stats)
 
 ## Verification
 

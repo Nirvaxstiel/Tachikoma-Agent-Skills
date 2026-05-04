@@ -2,8 +2,11 @@
 import { tool } from "@opencode-ai/plugin/tool";
 import { detectAndSelect } from "./tachikoma/model-harness";
 import { loadProjectContext, positionBiasConfig } from "./tachikoma/context-manager";
+import { GraphMemoryPlugin } from "./tachikoma/memory/graph-memory-plugin";
 
 export const TachikomaPlugin = async (ctx: any) => {
+  const graphMemory = await GraphMemoryPlugin(ctx);
+
   return {
     tool: {
       "tachikoma.model-select": tool({
@@ -27,6 +30,8 @@ export const TachikomaPlugin = async (ctx: any) => {
           return JSON.stringify(context, null, 2);
         },
       }),
+
+      ...graphMemory.tool,
     },
   };
 };

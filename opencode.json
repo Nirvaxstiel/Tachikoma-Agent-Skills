@@ -25,7 +25,7 @@
     }
   },
   "mcp": {
-    "tachikoma-memory": {
+    "caveman-compress": {
       "type": "local",
       "command": ["tachikoma-mcp-python"],
       "enabled": true
