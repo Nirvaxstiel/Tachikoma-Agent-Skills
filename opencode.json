@@ -1,12 +1,41 @@
 {
-  "$schema": "https://opencode.ai/config.json",
+  "$schema": "https://opencode.ai/schema.json",
   "model": "anthropic/claude-3-opus",
   "small_model": "anthropic/claude-3-haiku",
+  "default_agent": "tachikoma",
   "experimental": {
-    "continue_loop_on_deny": false,
     "batch_tool": true
   },
-  "permission": {
-    "doom_loop": "ask"
-  }
+  "skills": {
+    "paths": ["src/skills"]
+  },
+  "agent": {
+    "tachikoma": {
+      "description": "Research-focused agent with caveman voice, graph memory, PAUL methodology, skill tracking, and verification loops.",
+      "mode": "primary",
+      "prompt": "src/agents/tachikoma.md",
+      "permission": {
+        "terminal": "allow",
+        "read": "allow",
+        "write": "allow",
+        "web": "allow",
+        "todo": "allow",
+        "skills": "allow"
+      }
+    }
+  },
+  "mcp": {
+    "tachikoma-memory": {
+      "type": "local",
+      "command": ["tachikoma-mcp-python"],
+      "enabled": true
+    }
+  },
+  "plugin": [
+    "src/plugin/tachikoma.ts",
+    "src/plugin/tachikoma/opensage/graph-memory.ts",
+    "src/plugin/tachikoma/opensage/opensage-agents.ts",
+    "src/plugin/tachikoma/graph-routing/plugin-integration.ts",
+    "src/plugin/tachikoma/opensage/dynamic-tools.ts"
+  ]
 }
