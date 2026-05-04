@@ -12,9 +12,8 @@
 # 1. Install the agent plugin
 bun run install.ts
 
-# 2. Install the MCP server (from tachikoma-mcp repo)
-cd /path/to/tachikoma-mcp
-pip install -e .
+# 2. Install the MCP server (from tachikoma-mcp submodule)
+pip install -e src/server
 
 # 3. Copy opencode.json to your project root
 cp /path/to/tachikoma-agent-skills/opencode.json /path/to/your-project/
@@ -46,12 +45,11 @@ opencode
 
 ## MCP Server
 
-The MCP server (`tachikoma-mcp`) provides graph memory:
+The MCP server is at `src/server/` (merged from tachikoma-mcp repo).
 
 ```bash
 # Install
-cd /path/to/tachikoma-mcp
-pip install -e .
+pip install -e src/server
 
 # Verify
 tachikoma-mcp-python --version
