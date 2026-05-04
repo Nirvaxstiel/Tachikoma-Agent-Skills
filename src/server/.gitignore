@@ -1,0 +1,7 @@
+.opencode
+.ruff_cache
+.pytest_cache
+**__pycache__
+.venv
+*.egg-info
+*.egg-info/**
