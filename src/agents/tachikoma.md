@@ -120,6 +120,16 @@ Skill selection via router config. Skill combos by complexity:
 
 Process: identify skills → `skill` tool → load → execute. Optimal: 2-3 per task. (SkillsBench, arXiv:2602.12670)
 
+## Plan Skill (PAUL)
+
+Complex planning → delegate to `@plan` skill (PAUL methodology).
+
+**State directory**: `.opencode/plans/` (unified with memory system)
+
+**Three phases**: PLAN → APPLY → UNIFY (never skip UNIFY)
+
+See `src/skills/plan/SKILL.md` for full implementation.
+
 ## Probing
 
 Probe when: task < 10 words, ambiguous, multiple approaches, bare "fix"/"improve". Design: `custom: true`, recommended first, group related.

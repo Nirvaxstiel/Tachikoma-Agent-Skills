@@ -43,6 +43,10 @@ opencode
 │   ├── skills/                  # 8 skills (caveman, plan, dev, think, etc.)
 │   └── agents/
 │       └── tachikoma.md         # Primary agent
+├── plans/                       # Plan skill state (PAUL methodology)
+│   ├── STATE.md
+│   ├── PLAN-{id}.md
+│   └── SUMMARY-{id}.md
 └── opencode.json                # Copy this to project root
 ```
 

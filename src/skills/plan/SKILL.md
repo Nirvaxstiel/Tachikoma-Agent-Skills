@@ -31,7 +31,7 @@ Plan-Apply-Unify Loop. **Never skip Unify.** Prevents drift, enforces consistenc
 
 Define "done" before starting.
 
-Output → `.tachikoma/state/phases/PLAN-{id}.md`:
+Output → `.opencode/plans/PLAN-{id}.md`:
 
 ```
 ---
@@ -75,7 +75,7 @@ Execute tasks sequentially. Verify each against AC before next. Track deviations
 
 ### 3. UNIFY (mandatory)
 
-Reconcile plan vs actual. Output → `.tachikoma/state/phases/SUMMARY-{id}.md`:
+Reconcile plan vs actual. Output → `.opencode/plans/SUMMARY-{id}.md`:
 
 ```
 # Summary {id}
@@ -93,7 +93,7 @@ Reconcile plan vs actual. Output → `.tachikoma/state/phases/SUMMARY-{id}.md`:
 ## Deviations / Decisions / Unresolved / Next Steps
 ```
 
-Update `.tachikoma/state/STATE.md` → `loop_position: UNIFY`.
+Update `.opencode/plans/STATE.md` → `loop_position: UNIFY`.
 
 ## State Transitions
 
@@ -114,14 +114,14 @@ PLAN (only when position=none|UNIFY)
 
 ## Long Sessions
 
-State at `.tachikoma/state/`:
+State at `.opencode/plans/`:
 ```
-.tachikoma/
-  state/
+.opencode/
+  plans/
     STATE.md          # loop position, AC status
-    plan.md           # original plan
-    summary.md        # UNIFY output
-    artifacts/        # large outputs, test results
+    PLAN-{id}.md      # PLAN phase output
+    SUMMARY-{id}.md   # UNIFY phase output
+    artifacts/         # large outputs, test results
 ```
 
 **Filesystem patterns**: tool outputs >2000 tokens → write to artifacts, return summary + reference.
@@ -145,3 +145,20 @@ State at `.tachikoma/state/`:
 4. STATE.md updated to UNIFY
 
 **Never stop at APPLY — always UNIFY.**
+
+## Hermes Compatibility
+
+Tachikoma and Hermes share the same PAUL methodology but use different state directories:
+
+| Agent | State Directory |
+|-------|----------------|
+| **Tachikoma** | `.opencode/plans/` |
+| **Hermes** | `.hermes/plans/` |
+
+Both store the same structure:
+- `STATE.md` — loop position and AC status
+- `PLAN-{id}.md` — PLAN phase output
+- `SUMMARY-{id}.md` — UNIFY phase output
+- `artifacts/` — large outputs, test results
+
+**Cross-reference**: Hermes also uses the plan skill with PAUL methodology. See [Hermes plan skill](src/skills/plan/SKILL.md) for implementation details.
