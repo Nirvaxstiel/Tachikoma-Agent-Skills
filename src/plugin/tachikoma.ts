@@ -1,138 +1,32 @@
 #!/usr/bin/env bun
-/**
- * Tachikoma Plugin for OpenCode
- * Auto-discovers scripts and registers them as tools
- *
- * Convention:
- * - Scripts live in the same directory as this plugin ("tachikoma/")
- * - Each script becomes tachikoma.<script-name> tool
- * - Scripts use JSDoc comments for descriptions
- * - Scripts accept arguments via Bun.argv or process.argv
- *
- * Note: Agent modules (core.ts, router.ts, etc.) are NOT registered as tools.
- *       They are internal modules used for agent logic.
- */
-
-import fs from "node:fs/promises";
-import path from "node:path";
 import { tool } from "@opencode-ai/plugin/tool";
-
-interface ScriptInfo {
-  name: string;
-  path: string;
-  description: string;
-  hasPathArg: boolean;
-}
-
-function getPluginDir(): string {
-  let scriptPath = new URL(import.meta.url).pathname;
-  if (process.platform === "win32" && scriptPath.startsWith("/")) {
-    scriptPath = scriptPath.substring(1);
-  }
-  return path.dirname(scriptPath);
-}
-
-function getScriptsDir(): string {
-  return path.join(getPluginDir(), "tachikoma");
-}
-
-async function listScripts(): Promise<ScriptInfo[]> {
-  const scriptsDir = getScriptsDir();
-  const scripts: ScriptInfo[] = [];
-
-  try {
-    const files = await fs.readdir(scriptsDir);
-
-    for (const file of files) {
-      if (!file.endsWith(".ts") || file.startsWith("_")) continue;
-
-      const scriptPath = path.join(scriptsDir, file);
-      const scriptName = file.replace(".ts", "");
-
-      const scriptContent = await fs.readFile(scriptPath, "utf-8");
-      const descMatch = scriptContent.match(/\/\*\*[\s\S]*?\*\//);
-      const description = descMatch
-        ? descMatch[0]
-            .replace(/\/\*\*|\*\//g, "")
-            .trim()
-            .replace(/^\s*\* /gm, "")
-            .trim()
-            .split("\n")[0]
-        : `Run ${scriptName} script`;
-
-      // Check if script is a standalone script (has shebang)
-      // Agent modules don't have shebangs
-      // Skip agent modules (core.ts, router.ts, etc.)
-      const isScript = scriptContent.startsWith("#!");
-
-      if (!isScript) {
-        continue;
-      }
-
-      const hasPathArg =
-        scriptContent.includes("Bun.argv[2]") ||
-        scriptContent.includes("process.argv[2]") ||
-        scriptContent.includes("args.path");
-
-      scripts.push({
-        name: scriptName,
-        path: scriptPath,
-        description,
-        hasPathArg,
-      });
-    }
-  } catch (error) {
-    console.error(`Error listing scripts: ${error}`);
-  }
-
-  return scripts;
-}
-
-function getSchema(script: ScriptInfo) {
-  return {
-    path: script.hasPathArg
-      ? tool.schema.string().describe("Path to process")
-      : tool.schema.string().optional().describe("Path (if applicable)"),
-    args: tool.schema
-      .string()
-      .optional()
-      .describe("Arguments to pass to script"),
-  };
-}
+import { detectAndSelect } from "./tachikoma/model-harness";
+import { loadProjectContext, positionBiasConfig } from "./tachikoma/context-manager";
 
 export const TachikomaPlugin = async (ctx: any) => {
-  const scripts = await listScripts();
-  const tools: Record<string, any> = {};
+  return {
+    tool: {
+      "tachikoma.model-select": tool({
+        description: "Detect the active model and select the best edit format for it. Pass a task description to get format recommendations.",
+        args: {
+          request: tool.schema.string().optional().describe("Task description to guide model/format selection"),
+        },
+        async execute(args) {
+          const result = await detectAndSelect(args.request);
+          return JSON.stringify(result, null, 2);
+        },
+      }),
 
-  for (const script of scripts) {
-    const toolName = `tachikoma.${script.name}`;
-    const schema = getSchema(script);
-
-    tools[toolName] = tool({
-      description: script.description,
-      args: schema,
-      async execute(args, context) {
-        const scriptArgs = script.hasPathArg
-          ? args.path || ""
-          : args.args || "";
-
-        const proc = Bun.spawn(["bun", "run", script.path, scriptArgs], {
-          stdout: "pipe",
-          stderr: "pipe",
-        });
-
-        const stdout = await new Response(proc.stdout).text();
-        const stderr = await new Response(proc.stderr).text();
-        const exitCode = await proc.exited;
-
-        if (exitCode !== 0) {
-          throw new Error(`Script failed: ${stderr || "Unknown error"}`);
-        }
-
-        return stdout;
-      },
-    });
-  }
-
-  return { tool: tools };
+      "tachikoma.context-status": tool({
+        description: `Load project context with U-shaped position bias. Reports context sources, token budget, and priority tiers. Config: start=${positionBiasConfig.startWeight} mid=${positionBiasConfig.middleWeight} end=${positionBiasConfig.endWeight}`,
+        args: {
+          cwd: tool.schema.string().optional().describe("Project directory (defaults to current working directory)"),
+        },
+        async execute(args) {
+          const context = await loadProjectContext(args.cwd || process.cwd());
+          return JSON.stringify(context, null, 2);
+        },
+      }),
+    },
+  };
 };
