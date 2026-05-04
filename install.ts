@@ -220,12 +220,28 @@ async function install() {
       console.log(dim("   Remove it manually if you're satisfied with the installation."));
     }
 
+    const opencodeJsonPath = path.join(targetDir, "opencode.json");
+    if (await fs.stat(opencodeJsonPath).catch(() => null)) {
+      console.log("");
+      console.log(cyan("🔧 Post-install steps:"));
+      console.log("");
+      console.log("  1. Install MCP package (from tachikoma-mcp repo):");
+      console.log("     cd /path/to/tachikoma-mcp");
+      console.log("     pip install -e .");
+      console.log("  2. Run 'opencode' from the project directory");
+      console.log("");
+    } else {
+      console.log("");
+      console.log(dim("  Note: Copy opencode.json to your project root to enable the agent."));
+    }
+
     console.log("");
     console.log(cyan("🚀 To use Tachikoma:"));
     console.log("");
-    console.log("  1. Run 'opencode'");
-    console.log("  2. Use '@tachikoma' to invoke the agent");
-    console.log("  3. Use 'tachikoma.*' tools for script operations");
+    console.log("  1. Install MCP: pip install -e /path/to/tachikoma-mcp");
+    console.log("  2. Run 'opencode' from project directory");
+    console.log("  3. Use '@tachikoma' to invoke the agent");
+    console.log("  4. Use '@caveman', '@caveman-commit', '@caveman-review' for compressed voice");
     console.log("");
   } catch (error) {
     console.error(magenta("Installation failed"));
