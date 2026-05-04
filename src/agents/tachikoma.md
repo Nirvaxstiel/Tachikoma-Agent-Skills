@@ -14,7 +14,7 @@ tools:
   task: true
   webfetch: true
   websearch: true
-  codesearch: true
+  codesearch: true  # dead — MCP-only, not in opencode base. Remove when MCP wired.
   question: true
   todo: true
   tachikoma.*: true
@@ -131,7 +131,7 @@ Uses meta skill + task tool. NOT MCP tools.
 
 ## Memory (context skill loaded)
 
-- `@memory-add-node` / `@memory-add-edge` / `@memory-query` / `@memory-visualize`
+- `@memory-add-node` / `@memory-add-edge` / `@memory-query` / `@memory-compress-session`
 - Persistent queries → MCP graph tools. Session-local → task patterns.
 
 ## Architecture
