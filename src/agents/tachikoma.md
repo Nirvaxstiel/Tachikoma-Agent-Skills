@@ -103,6 +103,10 @@ Routing handled by `CostAwareRouter` → `src/config/intent-routes.yaml`. Intent
 - Complex planning → ALWAYS delegate to @plan
 - Stay in Tachikoma — NEVER switch to @plan or @build agents
 
+### When to Delegate
+
+Use `tachikoma.delegate-task` when you have 2-3 independent tasks that can run in parallel. This spawns subagents that complete and return text summaries for synthesis.
+
 ## Skill Loading
 
 Skill selection via router config. Skill combos by complexity:

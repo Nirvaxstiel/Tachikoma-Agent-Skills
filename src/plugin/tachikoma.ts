@@ -5,6 +5,7 @@ import { loadProjectContext, positionBiasConfig } from "./tachikoma/context-mana
 import { GraphMemoryPlugin } from "./tachikoma/memory/graph-memory-plugin";
 import { loadAllMemory, saveUserMemory, saveProjectMemory, appendToMemory, initProjectMemory } from "./tachikoma/memory/user-memory";
 import { appendSessionSummary, getRecentSessions, getSessionHistory } from "./tachikoma/memory/session-summary";
+import { spawnSubagent } from "./tachikoma/delegation";
 
 const memoryTargetEnum = tool.schema.enum(["user", "project"]);
 
@@ -105,6 +106,18 @@ export const TachikomaPlugin = async (ctx: any) => {
             ? await getSessionHistory(args.days)
             : await getRecentSessions(Math.min(args.count || 5, 20));
           return JSON.stringify(sessions, null, 2);
+        },
+      }),
+
+      "tachikoma.delegate-task": tool({
+        description: "Spawn a subagent to run a task in parallel. The subagent completes and returns a text summary. Use for parallel independent workstreams.",
+        args: {
+          task: tool.schema.string().describe("Task description for the subagent"),
+          agent: tool.schema.string().optional().describe("Subagent type: 'general' or 'explore'").defaults("general"),
+        },
+        async execute(args) {
+          const result = await spawnSubagent(args.agent || "general", args.task);
+          return result.summary;
         },
       }),
     },
