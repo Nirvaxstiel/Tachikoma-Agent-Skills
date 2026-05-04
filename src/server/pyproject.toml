@@ -16,7 +16,7 @@ dev = [
 ]
 
 [project.scripts]
-tachikoma-mcp-python = "tachikoma_mcp.server:main"
+tachikoma-mcp-python = "src.tachikoma_mcp.server:main"
 
 [build-system]
 requires = ["hatchling"]

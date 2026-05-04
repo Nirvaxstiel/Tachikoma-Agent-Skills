@@ -27,7 +27,7 @@
   "mcp": {
     "tachikoma-memory": {
       "type": "local",
-      "command": ["tachikoma-mcp-python"],
+      "command": ["python3", "-m", "src.tachikoma_mcp.server"],
       "enabled": true
     }
   },
