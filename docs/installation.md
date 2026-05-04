@@ -28,13 +28,16 @@ opencode
 .opencode/                    # Installed by install.ts
 ├── src/
 │   ├── plugin/
-│   │   └── tachikoma.ts     # Plugin entry (tachikoma.model-select, tachikoma.context-status)
+│   │   ├── tachikoma.ts     # Plugin entry
 │   │   └── tachikoma/
 │   │       ├── context-manager.ts
 │   │       ├── model-harness.ts
 │   │       ├── core.ts
 │   │       ├── verifier.ts
 │   │       ├── rlm-handler.ts
+│   │       ├── memory/
+│   │       │   ├── user-memory.ts      # USER.md / PROJECT.md memory
+│   │       │   └── session-summary.ts  # Session history
 │   │       ├── graph-routing/       # Dijkstra routing plugin
 │   │       └── opensage/            # Attention ensemble + coordinator
 │   ├── skills/                  # 8 skills (caveman, plan, dev, think, etc.)
@@ -42,6 +45,22 @@ opencode
 │       └── tachikoma.md         # Primary agent
 └── opencode.json                # Copy this to project root
 ```
+
+### Memory Directory
+
+```
+~/.opencode/memory/           # Persistent memory (created on first use)
+├── USER.md                   # User preferences and communication style
+├── PROJECT.md                # Project conventions and decisions
+└── SESSION/                  # Timestamped session summaries
+    └── session_YYYY-MM-DD_HH-MM-SS.md
+```
+
+**Tools for memory management**:
+- `tachikoma.load-memory` — Load user prefs and project context
+- `tachikoma.save-memory` — Save user/project memory (creates files on first use)
+- `tachikoma.append-session-summary` — Record session summary
+- `tachikoma.get-recent-sessions` — Retrieve recent session history
 
 ## MCP Server
 

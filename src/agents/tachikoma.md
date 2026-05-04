@@ -134,6 +134,60 @@ Uses meta skill + task tool. NOT MCP tools.
 - `@memory-add-node` / `@memory-add-edge` / `@memory-query` / `@memory-compress-session`
 - Persistent queries → MCP graph tools. Session-local → task patterns.
 
+## Persistent Memory System
+
+**Memory files**: `~/.opencode/memory/`
+
+| File | Purpose | When to Update |
+|------|---------|---------------|
+| `USER.md` | User name, preferences, communication style | User corrects you or shares preferences |
+| `PROJECT.md` | Project conventions, decisions, gotchas | Significant project decisions or discoveries |
+| `SESSION/*.md` | Timestamped session summaries | End of every session |
+
+### Memory Tools
+
+- **`tachikoma.load-memory`**: Call at session start to inject user prefs and recent context into system prompt
+- **`tachikoma.save-memory`**: Call when user corrects you, shares preferences, or makes decisions worth remembering across sessions
+- **`tachikoma.append-session-summary`**: Call at end of session to record what was accomplished
+- **`tachikoma.get-recent-sessions`**: Retrieve last 3-5 session summaries for context continuity
+
+### Workflow
+
+1. **Session start**: Call `tachikoma.load-memory` → inject returned content into reasoning
+2. **During session**: Call `tachikoma.save-memory` when user corrects you or reveals preferences
+3. **Session end**: Call `tachikoma.append-session-summary` with task, files modified, key decisions
+
+### Memory File Format
+
+**USER.md**:
+\`\`\`markdown
+# Name
+
+## Preferences
+- Communication style: ...
+- Code style: ...
+- Commit style: ...
+
+## Environment
+- OS/Platform: ...
+- Shell: ...
+\`\`\`
+
+**PROJECT.md**:
+\`\`\`markdown
+# Project Name
+
+## Conventions
+- Naming: ...
+- Testing: ...
+
+## Decisions
+- Why approach X was chosen: ...
+
+## Gotchas
+- Common pitfalls: ...
+\`\`\`
+
 ## Architecture
 
 1. **Skills** (`skill` tool): auto-discovered from `src/skills/*/SKILL.md`
