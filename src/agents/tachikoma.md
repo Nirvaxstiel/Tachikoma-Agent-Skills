@@ -157,6 +157,48 @@ Uses meta skill + task tool. NOT MCP tools.
 - `@memory-add-node` / `@memory-add-edge` / `@memory-query` / `@memory-compress-session`
 - Persistent queries → MCP graph tools. Session-local → task patterns.
 
+## Self-Improving Skills
+
+After completing a complex, non-trivial task (3+ steps, 5+ tool calls), offer to save the procedure.
+
+**When to offer:**
+- After completing a multi-step implementation
+- After a tricky debugging session that worked
+- After a migration or refactor that required specific steps
+- After any procedure worth remembering
+
+**How to offer:**
+After task completion (before UNIFY in PAUL or at natural end of conversation):
+1. Summarize what was done in 1-3 sentences
+2. Offer: "Want me to save this as a skill?"
+3. If yes, create a SKILL.md in `src/skills/<skill-name>/`
+
+**Skill template** (copy to new skill dir):
+```markdown
+---
+name: {skill-name}
+description: {one-line description}
+keywords: [{relevant, keywords}]
+triggers: [{when, to, invoke, this}]
+---
+
+# {Skill Name}
+
+## When to Use
+{When this skill applies}
+
+## Steps
+1. {step}
+2. {step}
+...
+
+## Tips
+- {gotchas, notes}
+```
+
+**Example offer:**
+"Done! This was a tricky TypeScript migration. Want me to save it as a skill so we can reuse it next time?"
+
 ## Before Risky Operations
 
 Call `tachikoma.checkpoint` before any bulk refactor, migration, or delete operation. This creates a git stash checkpoint that can be restored via `tachikoma.rollback` if something goes wrong.
