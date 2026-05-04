@@ -58,25 +58,25 @@ opencode
 
 #### Repo Isolation (Recommended)
 
-Each repository can have its own `PROJECT.md` for repo-isolated memory. This mirrors hermes profiles — each repo has its own isolated memory that stays with the repository.
+Each repository can have its own `.opencode/PROJECT.md` for repo-isolated memory. This mirrors hermes profiles — each repo has its own isolated memory that stays with the repository.
 
 ```
 # Repo-local memory (at repo root)
-./PROJECT.md                  # Repo-specific memory (takes priority)
+./.opencode/PROJECT.md          # Repo-specific memory (takes priority)
 ```
 
 **How it works:**
-- `tachikoma.load-memory` checks for `cwd/PROJECT.md` first (repo-local)
+- `tachikoma.load-memory` checks for `cwd/.opencode/PROJECT.md` first (repo-local)
 - Falls back to `~/.opencode/memory/PROJECT.md` if no repo-local file exists
-- The repo-local `PROJECT.md` stays with the repository (commit it to git!)
+- The repo-local `.opencode/PROJECT.md` stays with the repository (commit it to git!)
 
 **Initialize repo memory:**
 ```bash
 # Use the tool
 tachikoma.init-project-memory
 
-# Or manually create in your repo root
-cp ~/.opencode/memory/PROJECT.md ./PROJECT.md
+# Or manually
+mkdir -p .opencode && cp ~/.opencode/memory/PROJECT.md ./.opencode/PROJECT.md
 ```
 
 **Benefits:**
@@ -86,7 +86,7 @@ cp ~/.opencode/memory/PROJECT.md ./PROJECT.md
 
 **Tools for memory management**:
 - `tachikoma.load-memory` — Load user prefs and project context (checks repo-local first)
-- `tachikoma.init-project-memory` — Initialize a repo-local PROJECT.md template
+- `tachikoma.init-project-memory` — Initialize repo memory at cwd/.opencode/PROJECT.md
 - `tachikoma.save-memory` — Save user/project memory (saves to global by default)
 - `tachikoma.append-session-summary` — Record session summary
 - `tachikoma.get-recent-sessions` — Retrieve recent session history

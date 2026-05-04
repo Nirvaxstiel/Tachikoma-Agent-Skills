@@ -10,10 +10,10 @@ const USER_PATH = join(MEMORY_BASE, "USER.md");
 const PROJECT_PATH = join(MEMORY_BASE, "PROJECT.md");
 
 /**
- * Get the repo-local PROJECT.md path (cwd/PROJECT.md)
+ * Get the repo-local PROJECT.md path (cwd/.opencode/PROJECT.md)
  */
 export function getLocalProjectPath(): string {
-  return join(process.cwd(), "PROJECT.md");
+  return join(process.cwd(), ".opencode", "PROJECT.md");
 }
 
 /**
@@ -204,7 +204,7 @@ export async function appendToMemory(
 }
 
 /**
- * Initialize a repo-local PROJECT.md template in the current directory.
+ * Initialize a repo-local PROJECT.md template at cwd/.opencode/PROJECT.md.
  * This creates a fresh memory file for repo isolation.
  */
 export async function initProjectMemory(): Promise<{ success: boolean; path: string; created: boolean }> {
